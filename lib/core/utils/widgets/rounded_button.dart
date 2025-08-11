@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
+import 'package:kenic/core/utils/theme/app_pallete.dart';
 
 class RoundedButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -34,7 +35,7 @@ class RoundedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color effectiveBackgroundColor =
-        backgroundColor ?? Theme.of(context).colorScheme.primary;
+        backgroundColor ?? AppPallete.kenicRed;
     final Color effectiveTextColor =
         textColor ?? Theme.of(context).colorScheme.surface;
     final Color effectiveBorderColor =
