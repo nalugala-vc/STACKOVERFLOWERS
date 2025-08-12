@@ -58,3 +58,39 @@ class SignUpController extends BaseController {
     return null;
   }
 }
+
+class SignInController extends BaseController {
+  static SignInController get instance => Get.find();
+
+  final email = TextEditingController();
+  final password = TextEditingController();
+
+  @override
+  void onClose() {
+    email.dispose();
+    password.dispose();
+    super.onClose();
+  }
+
+  final errorMessage = ''.obs;
+
+  String? validateEmail(String email) {
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (email.isEmpty) {
+      return 'Email is required';
+    }
+    if (!emailRegex.hasMatch(email)) {
+      return 'Enter a valid email address';
+    }
+    return null;
+  }
+
+  String? validatePassword(String password) {
+    if (password.isEmpty) {
+      return 'Password is required';
+    }
+    return null;
+  }
+}
