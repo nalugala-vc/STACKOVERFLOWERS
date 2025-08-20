@@ -52,6 +52,8 @@ Widget get spaceW3 => const SizedBox(width: 3);
 
 Widget get spaceW5 => const SizedBox(width: 5);
 
+Widget get spaceW8 => const SizedBox(width: 8);
+
 Widget get spaceW10 => const SizedBox(width: 10);
 
 Widget get spaceW12 => const SizedBox(width: 12);
