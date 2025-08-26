@@ -1,15 +1,17 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:kenic/core/api/config.dart';
-import 'package:kenic/core/api/endpoints.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:kenic/core/controller/base_controller.dart';
 import 'package:kenic/core/utils/failure/app_failure.dart';
+import 'package:kenic/features/onboarding/repository/onboarding_repository.dart';
+import 'package:kenic/features/onboarding/models/models.dart';
 
 class OnboardingController extends BaseController {
   static OnboardingController get instance => Get.find();
+
+  // Repository
+  final OnboardingRepository _repository = OnboardingRepository();
 
   // Controllers
   final name = TextEditingController();
@@ -23,8 +25,14 @@ class OnboardingController extends BaseController {
   // Observable variables
   final currentStep = 0.obs;
   final errorMessage = ''.obs;
-  final isLoading = false.obs;
   final isLoggedIn = false.obs;
+  final currentUser = Rxn<User>();
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initializeUserFromStoredToken();
+  }
 
   @override
   void onClose() {
@@ -39,7 +47,7 @@ class OnboardingController extends BaseController {
   }
 
   // ==================== USER REGISTRATION ====================
-  Future<Either<AppFailure, String>> createUser({
+  Future<Either<AppFailure, User>> createUser({
     required String phoneNumber,
     required String email,
     required String password,
@@ -48,36 +56,27 @@ class OnboardingController extends BaseController {
     isLoading.value = true;
     errorMessage.value = '';
 
-    final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({
-      "email": email,
-      "name": name,
-      "phone_number": phoneNumber,
-      "password": password,
-    });
-
     try {
-      final response = await http.post(
-        Uri.parse(AppConfigs.appBaseUrl + Endpoints.register),
-        headers: headers,
-        body: body,
+      final result = await _repository.createUser(
+        phoneNumber: phoneNumber,
+        email: email,
+        password: password,
+        name: name,
       );
+      debugPrint('phoneNumber: $phoneNumber');
+      debugPrint('result: $result');
 
-      debugPrint('Status code: ${response.statusCode}');
-      debugPrint('Response body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return Left(AppFailure('Empty response from server'));
+      if (result.isRight()) {
+        result.fold((failure) => null, (user) {
+          currentUser.value = user;
+          if (user.token != null) {
+            _saveTokenToPreferences(user.token!);
+          }
+          isLoggedIn.value = true;
+        });
       }
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final message = resBodyMap['message'] ?? 'Something went wrong';
-        return Left(AppFailure(message));
-      }
-
-      return Right(resBodyMap['message'] ?? 'Account created successfully');
+      return result;
     } catch (e) {
       return Left(AppFailure('Unexpected error: ${e.toString()}'));
     } finally {
@@ -86,46 +85,31 @@ class OnboardingController extends BaseController {
   }
 
   // ==================== USER LOGIN ====================
-  Future<Either<AppFailure, String>> loginUser({
+  Future<Either<AppFailure, User>> loginUser({
     required String email,
     required String password,
   }) async {
     isLoading.value = true;
     errorMessage.value = '';
 
-    final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({"email": email, "password": password});
-
     try {
-      final response = await http.post(
-        Uri.parse(AppConfigs.appBaseUrl + Endpoints.login),
-        headers: headers,
-        body: body,
+      final result = await _repository.loginUser(
+        email: email,
+        password: password,
       );
 
-      debugPrint('Login Status code: ${response.statusCode}');
-      debugPrint('Login Response body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return Left(AppFailure('Empty response from server'));
+      // If login is successful, store user data and token
+      if (result.isRight()) {
+        result.fold((failure) => null, (user) {
+          currentUser.value = user;
+          if (user.token != null) {
+            _saveTokenToPreferences(user.token!);
+          }
+          isLoggedIn.value = true;
+        });
       }
 
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final message = resBodyMap['message'] ?? 'Login failed';
-        return Left(AppFailure(message));
-      }
-
-      // Store user data and token
-      final token = resBodyMap['token'] ?? resBodyMap['access_token'];
-      if (token != null) {
-        // Store token in secure storage
-        await _storeUserToken(token);
-        isLoggedIn.value = true;
-      }
-
-      return Right(resBodyMap['message'] ?? 'Login successful');
+      return result;
     } catch (e) {
       return Left(AppFailure('Login error: ${e.toString()}'));
     } finally {
@@ -141,36 +125,10 @@ class OnboardingController extends BaseController {
     isLoading.value = true;
     errorMessage.value = '';
 
-    final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({
-      "email": email,
-      if (phoneNumber != null) "phone_number": phoneNumber,
-    });
-
     try {
-      final response = await http.post(
-        Uri.parse(AppConfigs.appBaseUrl + Endpoints.verifyEmail),
-        headers: headers,
-        body: body,
-      );
+      final result = await _repository.sendVerification();
 
-      debugPrint('Verification Status code: ${response.statusCode}');
-      debugPrint('Verification Response body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return Left(AppFailure('Empty response from server'));
-      }
-
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final message = resBodyMap['message'] ?? 'Failed to send verification';
-        return Left(AppFailure(message));
-      }
-
-      return Right(
-        resBodyMap['message'] ?? 'Verification code sent successfully',
-      );
+      return result;
     } catch (e) {
       return Left(AppFailure('Verification error: ${e.toString()}'));
     } finally {
@@ -186,78 +144,19 @@ class OnboardingController extends BaseController {
     isLoading.value = true;
     errorMessage.value = '';
 
-    final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({"email": email, "otp": otp});
-
     try {
-      final response = await http.post(
-        Uri.parse(AppConfigs.appBaseUrl + Endpoints.verifyOtp),
-        headers: headers,
-        body: body,
-      );
+      final result = await _repository.verifyOTP(OTPCode: otp, email: email);
 
-      debugPrint('OTP Verification Status code: ${response.statusCode}');
-      debugPrint('OTP Verification Response body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return Left(AppFailure('Empty response from server'));
+      if (result.isRight()) {
+        return Right('OTP verified successfully');
+      } else {
+        return result.fold(
+          (failure) => Left(failure),
+          (success) => Right('OTP verified successfully'),
+        );
       }
-
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final message = resBodyMap['message'] ?? 'OTP verification failed';
-        return Left(AppFailure(message));
-      }
-
-      return Right(resBodyMap['message'] ?? 'OTP verified successfully');
     } catch (e) {
       return Left(AppFailure('OTP verification error: ${e.toString()}'));
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  // ==================== RESET PASSWORD ====================
-  Future<Either<AppFailure, String>> resetPassword({
-    required String email,
-    required String newPassword,
-    required String otp,
-  }) async {
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({
-      "email": email,
-      "new_password": newPassword,
-      "otp": otp,
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse(AppConfigs.appBaseUrl + Endpoints.resetPassword),
-        headers: headers,
-        body: body,
-      );
-
-      debugPrint('Reset Password Status code: ${response.statusCode}');
-      debugPrint('Reset Password Response body: ${response.body}');
-
-      if (response.body.isEmpty) {
-        return Left(AppFailure('Empty response from server'));
-      }
-
-      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
-
-      if (response.statusCode != 200 && response.statusCode != 201) {
-        final message = resBodyMap['message'] ?? 'Password reset failed';
-        return Left(AppFailure(message));
-      }
-
-      return Right(resBodyMap['message'] ?? 'Password reset successfully');
-    } catch (e) {
-      return Left(AppFailure('Password reset error: ${e.toString()}'));
     } finally {
       isLoading.value = false;
     }
@@ -307,7 +206,7 @@ class OnboardingController extends BaseController {
     if (phone.isEmpty) {
       return 'Phone number is required';
     }
-    if (phone.length < 10) {
+    if (phone.length < 9) {
       return 'Phone number must be at least 10 digits';
     }
     return null;
@@ -334,11 +233,13 @@ class OnboardingController extends BaseController {
   }
 
   // ==================== UTILITY METHODS ====================
-  Future<void> _storeUserToken(String token) async {
-    // TODO: Implement secure token storage
-    // This should use secure storage like flutter_secure_storage
-    debugPrint('Storing user token: $token');
-  }
+  User? get user => currentUser.value;
+
+  bool get hasUser => currentUser.value != null;
+
+  String? get currentToken => currentUser.value?.token;
+
+  bool get hasValidToken => currentUser.value?.token != null;
 
   void clearError() {
     errorMessage.value = '';
@@ -348,9 +249,10 @@ class OnboardingController extends BaseController {
     currentStep.value = step;
   }
 
-  void logout() {
+  void logout() async {
     isLoggedIn.value = false;
-    // TODO: Clear stored token and user data
+    currentUser.value = null;
+    await _clearTokenFromPreferences();
     clearError();
   }
 
@@ -428,5 +330,44 @@ class OnboardingController extends BaseController {
     }
 
     return true;
+  }
+
+  // Helper method to save token to shared preferences
+  Future<void> _saveTokenToPreferences(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('USER_TOKEN', token);
+  }
+
+  // Helper method to clear token from shared preferences
+  Future<void> _clearTokenFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('USER_TOKEN');
+  }
+
+  // Helper method to initialize user from stored token
+  Future<void> _initializeUserFromStoredToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final storedToken = prefs.getString('USER_TOKEN');
+
+      if (storedToken != null && storedToken.isNotEmpty) {
+        // TODO: Validate token with backend and get user data
+        // For now, we'll just check if token exists
+        isLoggedIn.value = true;
+      }
+    } catch (e) {
+      debugPrint('Error initializing user from stored token: $e');
+    }
+  }
+
+  // Method to check if user is authenticated
+  Future<bool> isAuthenticated() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('USER_TOKEN');
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
 }

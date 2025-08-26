@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AppConfigs {
-  static const appBaseUrl = 'https://resumate-backend-6dis.onrender.com/api';
+  static const appBaseUrl = 'https://kenic.east80.co.ke';
   static const int timeoutDuration = 55;
 
   static Future<Map<String, String>> authorizedHeaders() async {

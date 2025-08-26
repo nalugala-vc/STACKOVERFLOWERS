@@ -71,12 +71,35 @@ class _SignupState extends State<Signup> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Inter(
+                        text: 'Full Name',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      spaceH10,
+                      AuthField(
+                        controller: controller.name,
+                        hintText: '',
+                        validator:
+                            (value) => controller.validateName(value ?? ''),
+                      ),
+                    ],
+                  ),
+                  spaceH20,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Inter(
                         text: 'Email',
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
-                      AuthField(controller: controller.email, hintText: ''),
+                      AuthField(
+                        controller: controller.email,
+                        hintText: '',
+                        validator:
+                            (value) => controller.validateEmail(value ?? ''),
+                      ),
                     ],
                   ),
                   spaceH20,
@@ -140,6 +163,9 @@ class _SignupState extends State<Signup> {
                                   fillColor: AppPallete.kenicGrey,
                                 ),
                                 keyboardType: TextInputType.phone,
+                                validator:
+                                    (value) =>
+                                        controller.validatePhone(value ?? ''),
                               ),
                             ),
                           ],
@@ -161,12 +187,58 @@ class _SignupState extends State<Signup> {
                         controller: controller.password,
                         isObscureText: true,
                         hintText: '',
+                        validator:
+                            (value) => controller.validatePassword(value ?? ''),
+                      ),
+                    ],
+                  ),
+                  spaceH20,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Inter(
+                        text: 'Confirm Password',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      spaceH10,
+                      AuthField(
+                        controller: controller.confirmPassword,
+                        isObscureText: true,
+                        hintText: '',
+                        validator:
+                            (value) => controller.validateConfirmPassword(
+                              controller.password.text,
+                              value ?? '',
+                            ),
                       ),
                     ],
                   ),
                   spaceH40,
                   RoundedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        final result = await controller.createUser(
+                          name: controller.name.text.trim(),
+                          email: controller.email.text.trim(),
+                          phoneNumber: getFullPhoneNumber(),
+                          password: controller.password.text,
+                        );
+
+                        if (result.isRight()) {
+                          Get.offAllNamed('/home');
+                        } else {
+                          result.fold(
+                            (failure) => Get.snackbar(
+                              'Error',
+                              failure.message,
+                              snackPosition: SnackPosition.BOTTOM,
+                            ),
+                            (user) => null,
+                          );
+                        }
+                      }
+                    },
                     label: 'Sign Up',
                     fontsize: 18,
                   ),
@@ -182,7 +254,7 @@ class _SignupState extends State<Signup> {
                         fontWeight: FontWeight.normal,
                       ),
                       GestureDetector(
-                        onTap: () => Get.toNamed('/signup'),
+                        onTap: () => Get.toNamed('/signin'),
                         child: Inter(
                           text: 'Sign In',
                           fontSize: 14,

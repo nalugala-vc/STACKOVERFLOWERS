@@ -60,7 +60,12 @@ class _SigninState extends State<Signin> {
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
-                      AuthField(controller: controller.email, hintText: ''),
+                      AuthField(
+                        controller: controller.email,
+                        hintText: '',
+                        validator:
+                            (value) => controller.validateEmail(value ?? ''),
+                      ),
                     ],
                   ),
                   spaceH20,
@@ -77,6 +82,8 @@ class _SigninState extends State<Signin> {
                         controller: controller.password,
                         isObscureText: true,
                         hintText: '',
+                        validator:
+                            (value) => controller.validatePassword(value ?? ''),
                       ),
                     ],
                   ),
@@ -95,7 +102,27 @@ class _SigninState extends State<Signin> {
                   ),
                   spaceH40,
                   RoundedButton(
-                    onPressed: () {},
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        final result = await controller.loginUser(
+                          email: controller.email.text.trim(),
+                          password: controller.password.text,
+                        );
+
+                        if (result.isRight()) {
+                          Get.offAllNamed('/home');
+                        } else {
+                          result.fold(
+                            (failure) => Get.snackbar(
+                              'Error',
+                              failure.message,
+                              snackPosition: SnackPosition.BOTTOM,
+                            ),
+                            (user) => null,
+                          );
+                        }
+                      }
+                    },
                     label: 'Sign In',
                     fontsize: 18,
                   ),
