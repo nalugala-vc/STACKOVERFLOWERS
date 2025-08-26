@@ -5,7 +5,7 @@ import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/features/onboarding/controllers/forgot_password_controller.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 
 class ForgotPassword extends StatefulWidget {
   const ForgotPassword({super.key});
@@ -15,7 +15,7 @@ class ForgotPassword extends StatefulWidget {
 }
 
 class _ForgotPasswordState extends State<ForgotPassword> {
-  final controller = Get.put(ForgotPasswordController());
+  final controller = Get.put(OnboardingController());
   final _formKey = GlobalKey<FormState>();
 
   @override

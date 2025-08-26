@@ -945,20 +945,24 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   double _getPriceForExtension(String extension) {
     switch (extension) {
-      case '.com':
-        return 12.99;
+      case '.ke':
+        return 5.00;
       case '.co.ke':
         return 8.50;
       case '.or.ke':
         return 6.00;
       case '.ac.ke':
         return 7.50;
+      case '.sc.ke':
+        return 6.50;
       case '.go.ke':
         return 10.00;
       case '.ne.ke':
-        return 6.50;
-      case '.sc.ke':
         return 8.00;
+      case '.me.ke':
+        return 7.00;
+      case '.com':
+        return 12.99;
       case '.net':
         return 14.99;
       case '.org':

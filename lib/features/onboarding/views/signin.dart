@@ -5,7 +5,7 @@ import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/features/onboarding/controllers/signin_controller.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 
 class Signin extends StatefulWidget {
   const Signin({super.key});
@@ -15,7 +15,7 @@ class Signin extends StatefulWidget {
 }
 
 class _SigninState extends State<Signin> {
-  final controller = Get.put(SignInController());
+  final controller = Get.put(OnboardingController());
   final _formKey = GlobalKey<FormState>();
 
   @override

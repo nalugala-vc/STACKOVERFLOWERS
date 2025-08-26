@@ -4,7 +4,7 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/features/onboarding/controllers/verify_phone_controller.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 
 class VerifyPhone extends StatefulWidget {
@@ -15,7 +15,7 @@ class VerifyPhone extends StatefulWidget {
 }
 
 class _VerifyPhoneState extends State<VerifyPhone> {
-  final controller = Get.put(VerifyPhoneController());
+  final controller = Get.put(OnboardingController());
   CountryCode? _selectedCountryCode = CountryCode(
     code: 'US',
     dialCode: '+1',

@@ -5,10 +5,8 @@ import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/features/onboarding/controllers/signin_controller.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:country_code_picker/country_code_picker.dart';
-import 'package:kenic/features/onboarding/views/widget/sign_up_options.dart';
-import 'package:kenic/features/onboarding/views/widget/social_icons.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -18,7 +16,7 @@ class Signup extends StatefulWidget {
 }
 
 class _SignupState extends State<Signup> {
-  final controller = Get.put(SignUpController());
+  final controller = Get.put(OnboardingController());
 
   final _formKey = GlobalKey<FormState>();
   CountryCode? _selectedCountryCode = CountryCode(

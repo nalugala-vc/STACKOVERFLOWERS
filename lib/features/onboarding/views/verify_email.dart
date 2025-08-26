@@ -4,7 +4,7 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/features/onboarding/controllers/verify_email_controller.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:flutter_otp_text_field/flutter_otp_text_field.dart';
 
 class VerifyEmail extends StatefulWidget {
@@ -15,7 +15,7 @@ class VerifyEmail extends StatefulWidget {
 }
 
 class _VerifyEmailState extends State<VerifyEmail> {
-  final controller = Get.put(VerifyEmailController());
+  final controller = Get.put(OnboardingController());
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +68,10 @@ class _VerifyEmailState extends State<VerifyEmail> {
                   keyboardType: TextInputType.number,
                   autoFocus: true,
                   onCodeChanged: (String code) {
-                    controller.otp = code;
+                    controller.otp.text = code;
                   },
                   onSubmit: (String verificationCode) {
-                    controller.otp = verificationCode;
+                    controller.otp.text = verificationCode;
                     // Verify OTP
                     Get.toNamed('/reset-password');
                   },
