@@ -118,10 +118,7 @@ class OnboardingController extends BaseController {
   }
 
   // ==================== SEND VERIFICATION ====================
-  Future<Either<AppFailure, String>> sendVerification({
-    required String email,
-    String? phoneNumber,
-  }) async {
+  Future<Either<AppFailure, String>> sendVerification() async {
     isLoading.value = true;
     errorMessage.value = '';
 
@@ -137,15 +134,12 @@ class OnboardingController extends BaseController {
   }
 
   // ==================== VERIFY OTP ====================
-  Future<Either<AppFailure, String>> verifyOTP({
-    required String email,
-    required String otp,
-  }) async {
+  Future<Either<AppFailure, String>> verifyOTP({required String code}) async {
     isLoading.value = true;
     errorMessage.value = '';
 
     try {
-      final result = await _repository.verifyOTP(OTPCode: otp, email: email);
+      final result = await _repository.verifyOTP(code: code);
 
       if (result.isRight()) {
         return Right('OTP verified successfully');

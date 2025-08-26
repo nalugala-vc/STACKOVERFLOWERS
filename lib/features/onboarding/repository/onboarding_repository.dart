@@ -121,6 +121,12 @@ class OnboardingRepository {
         return Left(AppFailure(message));
       }
 
+      // Check for success field in response
+      if (resBodyMap['success'] != true) {
+        final message = resBodyMap['message'] ?? 'Failed to send verification';
+        return Left(AppFailure(message));
+      }
+
       return Right(
         resBodyMap['message'] ?? 'Verification code sent successfully',
       );
@@ -130,12 +136,9 @@ class OnboardingRepository {
   }
 
   // ==================== VERIFY OTP ====================
-  Future<Either<AppFailure, bool>> verifyOTP({
-    required String OTPCode,
-    required String email,
-  }) async {
+  Future<Either<AppFailure, bool>> verifyOTP({required String code}) async {
     final headers = await AppConfigs.authorizedHeaders();
-    final body = jsonEncode({"email": email, "otpCode": OTPCode});
+    final body = jsonEncode({"code": code});
 
     try {
       final response = await http.post(

@@ -34,6 +34,46 @@ class _SignupState extends State<Signup> {
     return phoneNumber;
   }
 
+  // Method to handle signup process
+  Future<void> _handleSignup() async {
+    if (_formKey.currentState!.validate()) {
+      final result = await controller.createUser(
+        name: controller.name.text.trim(),
+        email: controller.email.text.trim(),
+        phoneNumber: getFullPhoneNumber(),
+        password: controller.password.text,
+      );
+
+      if (result.isRight()) {
+        // After successful registration, send verification code
+        final verificationResult = await controller.sendVerification();
+
+        if (verificationResult.isRight()) {
+          // Redirect to OTP verification page
+          Get.offAllNamed('/verify-otp');
+        } else {
+          verificationResult.fold(
+            (failure) => Get.snackbar(
+              'Verification Error',
+              failure.message,
+              snackPosition: SnackPosition.BOTTOM,
+            ),
+            (message) => null,
+          );
+        }
+      } else {
+        result.fold(
+          (failure) => Get.snackbar(
+            'Error',
+            failure.message,
+            snackPosition: SnackPosition.BOTTOM,
+          ),
+          (user) => null,
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -215,32 +255,16 @@ class _SignupState extends State<Signup> {
                     ],
                   ),
                   spaceH40,
-                  RoundedButton(
-                    onPressed: () async {
-                      if (_formKey.currentState!.validate()) {
-                        final result = await controller.createUser(
-                          name: controller.name.text.trim(),
-                          email: controller.email.text.trim(),
-                          phoneNumber: getFullPhoneNumber(),
-                          password: controller.password.text,
-                        );
-
-                        if (result.isRight()) {
-                          Get.offAllNamed('/home');
-                        } else {
-                          result.fold(
-                            (failure) => Get.snackbar(
-                              'Error',
-                              failure.message,
-                              snackPosition: SnackPosition.BOTTOM,
-                            ),
-                            (user) => null,
-                          );
-                        }
-                      }
-                    },
-                    label: 'Sign Up',
-                    fontsize: 18,
+                  Obx(
+                    () => RoundedButton(
+                      onPressed:
+                          controller.isLoading.value ? () {} : _handleSignup,
+                      label:
+                          controller.isLoading.value
+                              ? 'Processing...'
+                              : 'Sign Up',
+                      fontsize: 18,
+                    ),
                   ),
 
                   spaceH50,
