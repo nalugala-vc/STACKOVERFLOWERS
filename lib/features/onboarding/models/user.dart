@@ -6,7 +6,7 @@ class User {
   final String? emailVerifiedAt;
   final String createdAt;
   final String updatedAt;
-  final String? token;
+  String? token;
 
   User({
     required this.id,

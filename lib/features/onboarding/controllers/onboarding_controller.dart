@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fpdart/fpdart.dart';
 import 'package:get/get.dart';
@@ -31,7 +32,19 @@ class OnboardingController extends BaseController {
   @override
   void onInit() {
     super.onInit();
-    _initializeUserFromStoredToken();
+  }
+
+  // Initialize auth state
+  Future<void> initializeAuth() async {
+    try {
+      await _initializeUserFromStoredToken();
+    } catch (e) {
+      debugPrint('Error initializing auth: $e');
+      // Clear any potentially corrupted data
+      await _clearTokenFromPreferences();
+      isLoggedIn.value = false;
+      currentUser.value = null;
+    }
   }
 
   @override
@@ -248,6 +261,7 @@ class OnboardingController extends BaseController {
     currentUser.value = null;
     await _clearTokenFromPreferences();
     clearError();
+    Get.offAllNamed('/signin');
   }
 
   // ==================== FORM VALIDATION ====================
@@ -326,31 +340,62 @@ class OnboardingController extends BaseController {
     return true;
   }
 
-  // Helper method to save token to shared preferences
+  // Helper method to save token and user data to shared preferences
   Future<void> _saveTokenToPreferences(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('USER_TOKEN', token);
+
+    // Save user data if available
+    if (currentUser.value != null) {
+      final userJson = jsonEncode(currentUser.value!.toJson());
+      await prefs.setString('USER_DATA', userJson);
+    }
   }
 
-  // Helper method to clear token from shared preferences
+  // Helper method to clear token and user data from shared preferences
   Future<void> _clearTokenFromPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('USER_TOKEN');
+    await prefs.remove('USER_DATA');
   }
 
   // Helper method to initialize user from stored token
   Future<void> _initializeUserFromStoredToken() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final storedToken = prefs.getString('USER_TOKEN');
+    final prefs = await SharedPreferences.getInstance();
+    final storedToken = prefs.getString('USER_TOKEN');
+    final storedUserJson = prefs.getString('USER_DATA');
 
-      if (storedToken != null && storedToken.isNotEmpty) {
-        // TODO: Validate token with backend and get user data
-        // For now, we'll just check if token exists
+    if (storedToken == null || storedToken.isEmpty) {
+      isLoggedIn.value = false;
+      currentUser.value = null;
+      return;
+    }
+
+    if (storedUserJson != null) {
+      try {
+        final userData = jsonDecode(storedUserJson);
+        final user = User.fromJson(userData);
+        user.token = storedToken; // Ensure token is set
+        currentUser.value = user;
         isLoggedIn.value = true;
+      } catch (e) {
+        debugPrint('Error parsing stored user data: $e');
+        throw Exception('Invalid stored user data');
       }
-    } catch (e) {
-      debugPrint('Error initializing user from stored token: $e');
+    } else {
+      // If we have a token but no user data, try to fetch user data from API
+      // TODO: Add API endpoint to fetch user data using token
+      // For now, we'll create a minimal user object with just the token
+      currentUser.value = User(
+        id: 0, // Placeholder ID
+        name: '', // Will be updated when we add the user profile endpoint
+        email: '',
+        phoneNumber: '',
+        createdAt: DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
+        token: storedToken,
+      );
+      isLoggedIn.value = true;
     }
   }
 

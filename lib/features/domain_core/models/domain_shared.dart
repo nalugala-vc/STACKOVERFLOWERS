@@ -10,23 +10,37 @@ class PeriodPricing {
   });
 
   factory PeriodPricing.fromJson(Map<String, dynamic> json) {
-    return PeriodPricing(
-      register:
-          (json['register'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-      renew:
-          (json['renew'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-      transfer:
-          (json['transfer'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-    );
+    try {
+      // Convert the input json to ensure proper types
+      final Map<String, dynamic> safeJson = Map<String, dynamic>.from(json);
+      return PeriodPricing(
+        register: _parsePricingList(safeJson['register']),
+        renew: _parsePricingList(safeJson['renew']),
+        transfer: _parsePricingList(safeJson['transfer']),
+      );
+    } catch (e) {
+      print('Error parsing PeriodPricing: $e');
+      print('JSON content: $json');
+      return PeriodPricing(register: [], renew: [], transfer: []);
+    }
+  }
+
+  static List<PricingItem> _parsePricingList(dynamic value) {
+    if (value == null) return [];
+    if (value is! List) return [];
+
+    return value
+        .map((item) {
+          if (item is! Map<String, dynamic>) return null;
+          try {
+            return PricingItem.fromJson(item);
+          } catch (e) {
+            print('Error parsing PricingItem: $e');
+            return null;
+          }
+        })
+        .whereType<PricingItem>()
+        .toList();
   }
 
   Map<String, dynamic> toJson() {
@@ -35,6 +49,13 @@ class PeriodPricing {
       'renew': renew.map((item) => item.toJson()).toList(),
       'transfer': transfer.map((item) => item.toJson()).toList(),
     };
+  }
+
+  // Helper method to get the best registration price
+  String? get bestRegistrationPrice {
+    if (register.isEmpty) return null;
+    final firstPrice = register.first;
+    return '${firstPrice.price} ${firstPrice.currency}';
   }
 }
 
@@ -52,12 +73,25 @@ class PricingItem {
   });
 
   factory PricingItem.fromJson(Map<String, dynamic> json) {
-    return PricingItem(
-      price: json['price'] as int,
-      currency: json['currency'] as String,
-      period: json['period'] as int,
-      type: json['type'] as String,
-    );
+    try {
+      final Map<String, dynamic> safeJson = Map<String, dynamic>.from(json);
+      return PricingItem(
+        price:
+            safeJson['price'] is int
+                ? safeJson['price']
+                : int.parse(safeJson['price'].toString()),
+        currency: safeJson['currency'].toString(),
+        period:
+            safeJson['period'] is int
+                ? safeJson['period']
+                : int.parse(safeJson['period'].toString()),
+        type: safeJson['type'].toString(),
+      );
+    } catch (e) {
+      print('Error parsing PricingItem: $e');
+      print('JSON content: $json');
+      throw FormatException('Invalid PricingItem format: $e');
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -84,24 +118,18 @@ class ShortestPeriod {
   });
 
   factory ShortestPeriod.fromJson(Map<String, dynamic> json) {
-    return ShortestPeriod(
-      period: json['period'] as int,
-      register:
-          (json['register'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-      transfer:
-          (json['transfer'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-      renew:
-          (json['renew'] as List<dynamic>?)
-              ?.map((item) => PricingItem.fromJson(item))
-              .toList() ??
-          [],
-    );
+    try {
+      return ShortestPeriod(
+        period: json['period'] as int? ?? 1,
+        register: PeriodPricing._parsePricingList(json['register']),
+        transfer: PeriodPricing._parsePricingList(json['transfer']),
+        renew: PeriodPricing._parsePricingList(json['renew']),
+      );
+    } catch (e) {
+      print('Error parsing ShortestPeriod: $e');
+      print('JSON content: $json');
+      return ShortestPeriod(period: 1, register: [], transfer: [], renew: []);
+    }
   }
 
   Map<String, dynamic> toJson() {

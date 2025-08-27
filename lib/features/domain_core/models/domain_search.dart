@@ -97,12 +97,14 @@ class DomainInfo {
 
     // Safe parsing for pricing
     Map<String, PeriodPricing> pricingMap = {};
-    if (json['pricing'] is Map<String, dynamic>) {
-      final pricingJson = json['pricing'] as Map<String, dynamic>;
-      pricingJson.forEach((key, value) {
+    final pricing = json['pricing'];
+    if (pricing is Map) {
+      pricing.forEach((key, value) {
         try {
-          if (value is Map<String, dynamic>) {
-            pricingMap[key] = PeriodPricing.fromJson(value);
+          if (value is Map) {
+            pricingMap[key.toString()] = PeriodPricing.fromJson(
+              Map<String, dynamic>.from(value),
+            );
           } else {
             print('Warning: Pricing value for key $key is not a Map: $value');
           }
@@ -111,7 +113,7 @@ class DomainInfo {
         }
       });
     } else {
-      print('Warning: Pricing field is not a Map: ${json['pricing']}');
+      print('Warning: Pricing field is not a Map: $pricing');
     }
 
     return DomainInfo(

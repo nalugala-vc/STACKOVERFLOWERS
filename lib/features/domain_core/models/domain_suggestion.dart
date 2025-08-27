@@ -46,6 +46,27 @@ class DomainSuggestionResponse {
   });
 
   factory DomainSuggestionResponse.fromJson(Map<String, dynamic> json) {
+    // Safe parsing for pricing similar to DomainInfo
+    Map<String, PeriodPricing> pricingMap = {};
+    final pricing = json['pricing'];
+    if (pricing is Map) {
+      pricing.forEach((key, value) {
+        try {
+          if (value is Map) {
+            pricingMap[key.toString()] = PeriodPricing.fromJson(
+              Map<String, dynamic>.from(value),
+            );
+          } else {
+            print('Warning: Pricing value for key $key is not a Map: $value');
+          }
+        } catch (e) {
+          print('Error parsing pricing for key $key: $e');
+        }
+      });
+    } else {
+      print('Warning: Pricing field is not a Map: $pricing');
+    }
+
     return DomainSuggestionResponse(
       domainName: json['domainName'] as String,
       idnDomainName: json['idnDomainName'] as String,
@@ -60,15 +81,24 @@ class DomainSuggestionResponse {
       isAvailable: json['isAvailable'] as bool,
       isValidDomain: json['isValidDomain'] as bool,
       domainErrorMessage: json['domainErrorMessage'] as String,
-      pricing: (json['pricing'] as Map<String, dynamic>).map(
-        (key, value) => MapEntry(key, PeriodPricing.fromJson(value)),
-      ),
-      shortestPeriod: ShortestPeriod.fromJson(json['shortestPeriod']),
+      pricing: pricingMap,
+      shortestPeriod:
+          json['shortestPeriod'] != null
+              ? ShortestPeriod.fromJson(json['shortestPeriod'])
+              : ShortestPeriod(
+                period: 1,
+                register: [],
+                transfer: [],
+                renew: [],
+              ),
       group: json['group'] as String,
       minLength: json['minLength'] as int,
       maxLength: json['maxLength'] as int,
       isPremium: json['isPremium'] as bool,
-      premiumCostPricing: json['premiumCostPricing'] as List<dynamic>,
+      premiumCostPricing:
+          json['premiumCostPricing'] is List<dynamic>
+              ? json['premiumCostPricing'] as List<dynamic>
+              : [],
     );
   }
 
