@@ -7,6 +7,7 @@ import 'package:kenic/features/domain_core/views/home_dashboard.dart';
 import 'package:kenic/features/domain_core/views/domain_search_results.dart';
 import 'package:kenic/features/domain_core/views/domain_details.dart';
 import 'package:kenic/features/domain_core/views/cart_checkout.dart';
+import 'package:kenic/features/domain_core/views/checkout_page.dart';
 import 'package:kenic/features/domain_core/views/payment_confirmation.dart';
 
 class AppRoutes {
@@ -49,6 +50,11 @@ class AppRoutes {
     GetPage(
       name: '/cart',
       page: () => const CartCheckout(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: '/checkout-page',
+      page: () => const CheckoutPage(),
       middlewares: [authMiddleware],
     ),
     GetPage(
