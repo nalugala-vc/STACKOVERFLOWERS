@@ -4,6 +4,7 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/domain_core/controllers/domain_search_controller.dart';
+import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
 import 'package:kenic/features/domain_core/models/models.dart';
 
 class DomainSearchResults extends StatelessWidget {
@@ -193,29 +194,30 @@ class DomainSearchResults extends StatelessWidget {
           if (domain.isAvailable) ...[
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Add to cart functionality
-                  Get.snackbar(
-                    'Success',
-                    'Domain added to cart!',
-                    backgroundColor: Colors.green.shade100,
-                    colorText: Colors.green.shade900,
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppPallete.kenicRed,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: const Text(
-                  'Add to Cart',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+              child: Obx(() {
+                final cartController = Get.find<CartController>();
+                final isInCart = cartController.isInCart(domain.domainName);
+
+                return ElevatedButton(
+                  onPressed:
+                      isInCart
+                          ? null
+                          : () => cartController.addDomainInfoToCart(domain),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        isInCart ? Colors.grey.shade400 : AppPallete.kenicRed,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                ),
-              ),
+                  child: Text(
+                    isInCart ? 'Already in Cart' : 'Add to Cart',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                );
+              }),
             ),
           ],
         ],
@@ -270,21 +272,21 @@ class DomainSearchResults extends StatelessWidget {
             ),
           ),
           if (suggestion.isAvailable) ...[
-            IconButton(
-              onPressed: () {
-                // TODO: Add to cart functionality
-                Get.snackbar(
-                  'Success',
-                  'Domain added to cart!',
-                  backgroundColor: Colors.green.shade100,
-                  colorText: Colors.green.shade900,
-                );
-              },
-              icon: const Icon(
-                Icons.add_shopping_cart,
-                color: AppPallete.kenicRed,
-              ),
-            ),
+            Obx(() {
+              final cartController = Get.find<CartController>();
+              final isInCart = cartController.isInCart(suggestion.domainName);
+
+              return IconButton(
+                onPressed:
+                    isInCart
+                        ? null
+                        : () => cartController.addDomainInfoToCart(suggestion),
+                icon: Icon(
+                  isInCart ? Icons.check_circle : Icons.add_shopping_cart,
+                  color: isInCart ? Colors.green : AppPallete.kenicRed,
+                ),
+              );
+            }),
           ],
         ],
       ),

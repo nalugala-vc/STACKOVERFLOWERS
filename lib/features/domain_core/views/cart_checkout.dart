@@ -54,37 +54,56 @@ class _CartCheckoutState extends State<CartCheckout> {
           fontSize: 18,
           fontWeight: FontWeight.w600,
         ),
+        actions: [
+          IconButton(
+            onPressed: () => cartController.refreshCart(),
+            icon: const HeroIcon(
+              HeroIcons.arrowPath,
+              size: 20,
+              color: AppPallete.kenicBlack,
+            ),
+          ),
+        ],
       ),
       body: Obx(() {
+        if (cartController.isLoading.value) {
+          return const Center(
+            child: CircularProgressIndicator(color: AppPallete.kenicRed),
+          );
+        }
+
         if (cartController.cart.value.isEmpty) {
           return _buildEmptyCart();
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Cart Items
-              _buildCartItems(),
-              spaceH30,
+        return RefreshIndicator(
+          onRefresh: () => cartController.refreshCart(),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Cart Items
+                _buildCartItems(),
+                spaceH30,
 
-              // Promo Code
-              _buildPromoSection(),
-              spaceH30,
+                // Promo Code
+                _buildPromoSection(),
+                spaceH30,
 
-              // Order Summary
-              _buildOrderSummary(),
-              spaceH30,
+                // Order Summary
+                _buildOrderSummary(),
+                spaceH30,
 
-              // Payment Methods
-              _buildPaymentMethods(),
-              spaceH30,
+                // Payment Methods
+                _buildPaymentMethods(),
+                spaceH30,
 
-              // Payment Details
-              _buildPaymentDetails(),
-              spaceH100,
-            ],
+                // Payment Details
+                _buildPaymentDetails(),
+                spaceH100,
+              ],
+            ),
           ),
         );
       }),
@@ -168,15 +187,58 @@ class _CartCheckoutState extends State<CartCheckout> {
               ),
               const Spacer(),
               Inter(
-                text: '${cartController.cart.value.itemCount} ${cartController.cart.value.itemCount == 1 ? 'item' : 'items'}',
+                text:
+                    '${cartController.cart.value.itemCount} ${cartController.cart.value.itemCount == 1 ? 'item' : 'items'}',
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 textColor: AppPallete.greyColor,
               ),
+              spaceW10,
+              if (cartController.cart.value.isNotEmpty)
+                GestureDetector(
+                  onTap: () => _showClearCartDialog(),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppPallete.kenicRed.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const HeroIcon(
+                      HeroIcons.trash,
+                      size: 16,
+                      color: AppPallete.kenicRed,
+                    ),
+                  ),
+                ),
             ],
           ),
           spaceH20,
-          ...cartController.cart.value.items.map((item) => _buildCartItem(item)),
+          if (cartController.cart.value.items.isEmpty)
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: Column(
+                  children: [
+                    const HeroIcon(
+                      HeroIcons.shoppingBag,
+                      size: 40,
+                      color: AppPallete.greyColor,
+                    ),
+                    spaceH10,
+                    Inter(
+                      text: 'No items in cart',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      textColor: AppPallete.greyColor,
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            ...cartController.cart.value.items.map(
+              (item) => _buildCartItem(item),
+            ),
         ],
       ),
     );
@@ -207,7 +269,8 @@ class _CartCheckoutState extends State<CartCheckout> {
                     ),
                     spaceH5,
                     Inter(
-                      text: '${item.registrationYears} ${item.registrationYears == 1 ? 'year' : 'years'} registration',
+                      text:
+                          '${item.registrationYears} ${item.registrationYears == 1 ? 'year' : 'years'} registration',
                       fontSize: 14,
                       fontWeight: FontWeight.normal,
                       textColor: AppPallete.greyColor,
@@ -220,13 +283,13 @@ class _CartCheckoutState extends State<CartCheckout> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Inter(
-                    text: '\$${item.totalPrice.toStringAsFixed(2)}',
+                    text: 'KES ${item.totalPrice.toStringAsFixed(0)}',
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
                     textColor: AppPallete.kenicRed,
                   ),
                   Inter(
-                    text: '\$${item.domain.price.toStringAsFixed(2)}/year',
+                    text: 'KES ${item.domain.price.toStringAsFixed(0)}/year',
                     fontSize: 12,
                     fontWeight: FontWeight.normal,
                     textColor: AppPallete.greyColor,
@@ -240,7 +303,10 @@ class _CartCheckoutState extends State<CartCheckout> {
             children: [
               // Registration Years Selector
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: AppPallete.kenicWhite,
                   borderRadius: BorderRadius.circular(8),
@@ -256,16 +322,19 @@ class _CartCheckoutState extends State<CartCheckout> {
                     DropdownButton<int>(
                       value: item.registrationYears,
                       underline: const SizedBox.shrink(),
-                      items: List.generate(10, (index) => index + 1)
-                          .map((year) => DropdownMenuItem<int>(
-                                value: year,
-                                child: Inter(
-                                  text: '$year',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
+                      items:
+                          List.generate(10, (index) => index + 1)
+                              .map(
+                                (year) => DropdownMenuItem<int>(
+                                  value: year,
+                                  child: Inter(
+                                    text: '$year',
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
-                              ))
-                          .toList(),
+                              )
+                              .toList(),
                       onChanged: (value) {
                         if (value != null) {
                           cartController.updateRegistrationYears(
@@ -281,7 +350,10 @@ class _CartCheckoutState extends State<CartCheckout> {
               const Spacer(),
               // Remove Button
               GestureDetector(
-                onTap: () => cartController.removeFromCart(item.domain.fullDomainName),
+                onTap:
+                    () => cartController.removeFromCart(
+                      item.domain.fullDomainName,
+                    ),
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
@@ -357,14 +429,16 @@ class _CartCheckoutState extends State<CartCheckout> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Inter(
-                            text: 'Promo code applied: ${cartController.appliedPromoCode.value}',
+                            text:
+                                'Promo code applied: ${cartController.appliedPromoCode.value}',
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                             textColor: AppPallete.kenicGreen,
                             textAlignment: TextAlign.left,
                           ),
                           Inter(
-                            text: 'You saved \$${cartController.promoDiscount.value.toStringAsFixed(2)}',
+                            text:
+                                'You saved KES ${cartController.promoDiscount.value.toStringAsFixed(0)}',
                             fontSize: 12,
                             fontWeight: FontWeight.normal,
                             textColor: AppPallete.kenicGreen,
@@ -396,9 +470,10 @@ class _CartCheckoutState extends State<CartCheckout> {
                 ),
                 spaceW10,
                 RoundedButton(
-                  onPressed: () => cartController.applyPromoCode(
-                    cartController.promoCodeController.text,
-                  ),
+                  onPressed:
+                      () => cartController.applyPromoCode(
+                        cartController.promoCodeController.text,
+                      ),
                   label: 'Apply',
                   width: 80,
                   height: 48,
@@ -447,15 +522,25 @@ class _CartCheckoutState extends State<CartCheckout> {
             ],
           ),
           spaceH20,
-          _buildSummaryRow('Subtotal', '\$${cartController.cart.value.subtotal.toStringAsFixed(2)}'),
+          _buildSummaryRow(
+            'Subtotal',
+            'KES ${cartController.cart.value.subtotal.toStringAsFixed(0)}',
+          ),
           if (cartController.cart.value.discount > 0)
-            _buildSummaryRow('Discount', '-\$${cartController.cart.value.discount.toStringAsFixed(2)}', isDiscount: true),
+            _buildSummaryRow(
+              'Discount',
+              '-KES ${cartController.cart.value.discount.toStringAsFixed(0)}',
+              isDiscount: true,
+            ),
           if (cartController.cart.value.tax > 0)
-            _buildSummaryRow('Tax', '\$${cartController.cart.value.tax.toStringAsFixed(2)}'),
+            _buildSummaryRow(
+              'Tax',
+              'KES ${cartController.cart.value.tax.toStringAsFixed(0)}',
+            ),
           const Divider(color: AppPallete.kenicGrey, thickness: 1),
           _buildSummaryRow(
             'Total',
-            '\$${cartController.cart.value.total.toStringAsFixed(2)}',
+            'KES ${cartController.cart.value.total.toStringAsFixed(0)}',
             isTotal: true,
           ),
         ],
@@ -463,7 +548,12 @@ class _CartCheckoutState extends State<CartCheckout> {
     );
   }
 
-  Widget _buildSummaryRow(String label, String amount, {bool isDiscount = false, bool isTotal = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    String amount, {
+    bool isDiscount = false,
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -479,11 +569,12 @@ class _CartCheckoutState extends State<CartCheckout> {
             text: amount,
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            textColor: isDiscount 
-              ? AppPallete.kenicGreen 
-              : isTotal 
-                ? AppPallete.kenicRed 
-                : AppPallete.kenicBlack,
+            textColor:
+                isDiscount
+                    ? AppPallete.kenicGreen
+                    : isTotal
+                    ? AppPallete.kenicRed
+                    : AppPallete.kenicBlack,
           ),
         ],
       ),
@@ -524,7 +615,9 @@ class _CartCheckoutState extends State<CartCheckout> {
             ],
           ),
           spaceH20,
-          ...PaymentMethod.values.map((method) => _buildPaymentMethodOption(method)),
+          ...PaymentMethod.values.map(
+            (method) => _buildPaymentMethodOption(method),
+          ),
         ],
       ),
     );
@@ -540,7 +633,10 @@ class _CartCheckoutState extends State<CartCheckout> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppPallete.kenicRed.withOpacity(0.1) : AppPallete.kenicGrey,
+          color:
+              isSelected
+                  ? AppPallete.kenicRed.withOpacity(0.1)
+                  : AppPallete.kenicGrey,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? AppPallete.kenicRed : Colors.transparent,
@@ -555,11 +651,7 @@ class _CartCheckoutState extends State<CartCheckout> {
                 color: AppPallete.kenicWhite,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Image.asset(
-                methodData['icon']!,
-                height: 24,
-                width: 24,
-              ),
+              child: Image.asset(methodData['icon']!, height: 24, width: 24),
             ),
             spaceW15,
             Expanded(
@@ -630,8 +722,9 @@ class _CartCheckoutState extends State<CartCheckout> {
   }
 
   Widget _buildMobilePaymentDetails() {
-    final isAirtel = cartController.selectedPaymentMethod.value == PaymentMethod.airtelMoney;
-    
+    final isAirtel =
+        cartController.selectedPaymentMethod.value == PaymentMethod.airtelMoney;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -688,9 +781,10 @@ class _CartCheckoutState extends State<CartCheckout> {
                 spaceW10,
                 Expanded(
                   child: Inter(
-                    text: isAirtel 
-                      ? 'You will receive a payment prompt on your phone'
-                      : 'You will receive an M-Pesa STK push notification',
+                    text:
+                        isAirtel
+                            ? 'You will receive a payment prompt on your phone'
+                            : 'You will receive an M-Pesa STK push notification',
                     fontSize: 12,
                     fontWeight: FontWeight.normal,
                     textColor: AppPallete.greyColor,
@@ -738,10 +832,7 @@ class _CartCheckoutState extends State<CartCheckout> {
                 fontWeight: FontWeight.w500,
               ),
               spaceH10,
-              AuthField(
-                controller: cardHolderController,
-                hintText: 'John Doe',
-              ),
+              AuthField(controller: cardHolderController, hintText: 'John Doe'),
             ],
           ),
           spaceH20,
@@ -839,7 +930,8 @@ class _CartCheckoutState extends State<CartCheckout> {
                         textAlignment: TextAlign.left,
                       ),
                       Inter(
-                        text: '\$${cartController.cart.value.total.toStringAsFixed(2)}',
+                        text:
+                            'KES ${cartController.cart.value.total.toStringAsFixed(0)}',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         textColor: AppPallete.kenicRed,
@@ -851,11 +943,13 @@ class _CartCheckoutState extends State<CartCheckout> {
                 spaceW20,
                 Expanded(
                   flex: 2,
-                  child: Obx(() => RoundedButton(
-                    onPressed: _processPayment,
-                    label: 'Complete Payment',
-                    isLoading: cartController.isProcessingPayment.value,
-                  )),
+                  child: Obx(
+                    () => RoundedButton(
+                      onPressed: _processPayment,
+                      label: 'Complete Payment',
+                      isLoading: cartController.isProcessingPayment.value,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -924,5 +1018,33 @@ class _CartCheckoutState extends State<CartCheckout> {
           cvv: cvvController.text.trim(),
         );
     }
+  }
+
+  void _showClearCartDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Clear Cart'),
+          content: const Text(
+            'Are you sure you want to remove all items from your cart? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                cartController.clearCart();
+              },
+              style: TextButton.styleFrom(foregroundColor: AppPallete.kenicRed),
+              child: const Text('Clear Cart'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

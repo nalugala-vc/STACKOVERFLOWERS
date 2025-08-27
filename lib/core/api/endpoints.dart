@@ -8,4 +8,7 @@ class Endpoints {
   //Domain
   static const String domainSearch = '/api/domains/search';
   static const String domainSuggestions = '/api/domains/suggestions';
+
+  //Cart
+  static const String cart = '/api/cart';
 }

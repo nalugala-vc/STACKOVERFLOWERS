@@ -5,18 +5,26 @@ class CartItem {
   final int quantity;
   final int registrationYears;
   final double totalPrice;
+  final int? itemId; // API item ID for cart operations
 
   CartItem({
     required this.domain,
     this.quantity = 1,
     this.registrationYears = 1,
+    this.itemId,
   }) : totalPrice = domain.price * registrationYears;
 
-  CartItem copyWith({Domain? domain, int? quantity, int? registrationYears}) {
+  CartItem copyWith({
+    Domain? domain,
+    int? quantity,
+    int? registrationYears,
+    int? itemId,
+  }) {
     return CartItem(
       domain: domain ?? this.domain,
       quantity: quantity ?? this.quantity,
       registrationYears: registrationYears ?? this.registrationYears,
+      itemId: itemId ?? this.itemId,
     );
   }
 
@@ -26,6 +34,7 @@ class CartItem {
       'quantity': quantity,
       'registrationYears': registrationYears,
       'totalPrice': totalPrice,
+      'itemId': itemId,
     };
   }
 
@@ -34,6 +43,7 @@ class CartItem {
       domain: Domain.fromJson(json['domain']),
       quantity: json['quantity'] ?? 1,
       registrationYears: json['registrationYears'] ?? 1,
+      itemId: json['itemId'],
     );
   }
 }
