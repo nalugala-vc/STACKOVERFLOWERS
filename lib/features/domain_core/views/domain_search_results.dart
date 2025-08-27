@@ -1,113 +1,136 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
-import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/domain_core/controllers/domain_search_controller.dart';
-import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
-import 'package:kenic/features/domain_core/models/domain.dart';
+import 'package:kenic/features/domain_core/models/models.dart';
 
-class DomainSearchResults extends StatefulWidget {
+class DomainSearchResults extends StatelessWidget {
   const DomainSearchResults({super.key});
 
   @override
-  State<DomainSearchResults> createState() => _DomainSearchResultsState();
-}
-
-class _DomainSearchResultsState extends State<DomainSearchResults> {
-  final searchController = Get.find<DomainSearchController>();
-  final cartController = Get.find<CartController>();
-
-  @override
   Widget build(BuildContext context) {
+    final searchController = Get.find<DomainSearchController>();
+
     return Scaffold(
       backgroundColor: AppPallete.kenicWhite,
       appBar: AppBar(
         backgroundColor: AppPallete.kenicWhite,
         elevation: 0,
         leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: AppPallete.kenicBlack),
           onPressed: () => Get.back(),
-          icon: const HeroIcon(
-            HeroIcons.arrowLeft,
-            size: 24,
-            color: AppPallete.kenicBlack,
-          ),
         ),
         title: Inter(
           text: 'Search Results',
-          fontSize: 18,
+          fontSize: 20,
           fontWeight: FontWeight.w600,
+          textColor: AppPallete.kenicBlack,
         ),
-        actions: [
-          Obx(
-            () => Stack(
-              children: [
-                IconButton(
-                  onPressed: () => Get.toNamed('/cart'),
-                  icon: const HeroIcon(
-                    HeroIcons.shoppingBag,
-                    size: 24,
-                    color: AppPallete.kenicBlack,
-                  ),
-                ),
-                if (cartController.cart.value.isNotEmpty)
-                  Positioned(
-                    right: 6,
-                    top: 6,
-                    child: Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: AppPallete.kenicRed,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Inter(
-                        text: '${cartController.cart.value.itemCount}',
-                        fontSize: 10,
-                        textColor: AppPallete.kenicWhite,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
       ),
       body: Obx(() {
         if (searchController.isSearching.value) {
-          return _buildLoadingState();
+          return const Center(
+            child: CircularProgressIndicator(color: AppPallete.kenicRed),
+          );
         }
 
-        if (searchController.searchResults.isEmpty &&
-            searchController.aiSuggestions.isEmpty) {
-          return _buildEmptyState();
+        if (searchController.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppPallete.greyColor,
+                ),
+                spaceH20,
+                Inter(
+                  text: 'Error',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  textColor: AppPallete.kenicBlack,
+                ),
+                spaceH10,
+                Inter(
+                  text: searchController.errorMessage.value,
+                  fontSize: 16,
+                  textColor: AppPallete.greyColor,
+                  textAlignment: TextAlign.center,
+                ),
+                spaceH30,
+                ElevatedButton(
+                  onPressed: () => searchController.clearError(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppPallete.kenicRed,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                  ),
+                  child: const Text(
+                    'Try Again',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+          );
         }
+
+        if (!searchController.hasSearchResults) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 64, color: AppPallete.greyColor),
+                spaceH20,
+                Inter(
+                  text: 'No Results Found',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w600,
+                  textColor: AppPallete.kenicBlack,
+                ),
+                spaceH10,
+                Inter(
+                  text: 'Try searching for a different domain name',
+                  fontSize: 16,
+                  textColor: AppPallete.greyColor,
+                  textAlignment: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+
+        final searchResult = searchController.searchResult.value!;
+        final mainDomain = searchResult.domain;
+        final suggestions = searchResult.suggestions;
 
         return SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Search query info
-              _buildSearchInfo(),
-              spaceH20,
+              // Main Domain Result
+              _buildMainDomainCard(mainDomain),
+              spaceH30,
 
-              // Main search results
-              if (searchController.searchResults.isNotEmpty) ...[
-                _buildMainResults(),
-                spaceH30,
+              // Suggestions
+              if (suggestions.isNotEmpty) ...[
+                Inter(
+                  text: 'Alternative Domains',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  textColor: AppPallete.kenicBlack,
+                ),
+                spaceH20,
+                ...suggestions.map(
+                  (suggestion) => _buildSuggestionCard(suggestion),
+                ),
               ],
-
-              // AI Suggestions
-              if (searchController.aiSuggestions.isNotEmpty) ...[
-                _buildAISuggestions(),
-                spaceH30,
-              ],
-
-              // Search tips
-              _buildSearchTips(),
             ],
           ),
         );
@@ -115,318 +138,84 @@ class _DomainSearchResultsState extends State<DomainSearchResults> {
     );
   }
 
-  Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(color: AppPallete.kenicRed),
-          const SizedBox(height: 20),
-          Inter(
-            text: 'Searching domains...',
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const HeroIcon(
-              HeroIcons.magnifyingGlass,
-              size: 80,
-              color: AppPallete.greyColor,
-            ),
-            spaceH20,
-            Inter(
-              text: 'No results found',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-            spaceH10,
-            Inter(
-              text: 'Try different keywords or check your spelling',
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              textColor: AppPallete.greyColor,
-              textAlignment: TextAlign.center,
-            ),
-            spaceH30,
-            RoundedButton(
-              onPressed: () => Get.back(),
-              label: 'Try Again',
-              width: 200,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchInfo() {
+  Widget _buildMainDomainCard(DomainInfo domain) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppPallete.kenicGrey,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const HeroIcon(
-            HeroIcons.informationCircle,
-            size: 20,
-            color: AppPallete.kenicRed,
-          ),
-          spaceW10,
-          Expanded(
-            child: Inter(
-              text:
-                  'Showing results for "${searchController.searchController.text}"',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              textAlignment: TextAlign.left,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMainResults() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Inter(
-          text: 'Your Search Results',
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          textAlignment: TextAlign.left,
-        ),
-        spaceH15,
-        ...searchController.searchResults.map(
-          (domain) => _buildDomainCard(domain),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAISuggestions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppPallete.kenicRed.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const HeroIcon(
-                    HeroIcons.sparkles,
-                    size: 14,
-                    color: AppPallete.kenicRed,
-                  ),
-                  spaceW5,
-                  Inter(
-                    text: 'AI',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    textColor: AppPallete.kenicRed,
-                  ),
-                ],
-              ),
-            ),
-            spaceW10,
-            Inter(
-              text: 'We found some creative names for you',
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              textAlignment: TextAlign.left,
-            ),
-          ],
-        ),
-        spaceH15,
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            childAspectRatio: 2.2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-          ),
-          itemCount: searchController.aiSuggestions.length,
-          itemBuilder: (context, index) {
-            final suggestion = searchController.aiSuggestions[index];
-            return _buildSuggestionCard(suggestion);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDomainCard(Domain domain) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppPallete.kenicWhite,
-        borderRadius: BorderRadius.circular(12),
+        color: domain.isAvailable ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color:
-              domain.isAvailable
-                  ? AppPallete.kenicGreen
-                  : AppPallete.greyColor.withOpacity(0.3),
-          width: 1,
+              domain.isAvailable ? Colors.green.shade200 : Colors.red.shade200,
+          width: 2,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
+              Icon(
+                domain.isAvailable ? Icons.check_circle : Icons.cancel,
+                color: domain.isAvailable ? Colors.green : Colors.red,
+                size: 32,
+              ),
+              spaceW15,
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Inter(
-                      text: domain.fullDomainName,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      textAlignment: TextAlign.left,
+                      text: domain.domainName,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      textColor: AppPallete.kenicBlack,
                     ),
-                    spaceH5,
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color:
-                                domain.isAvailable
-                                    ? AppPallete.kenicGreen.withOpacity(0.1)
-                                    : AppPallete.greyColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Inter(
-                            text: domain.isAvailable ? 'Available' : 'Taken',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            textColor:
-                                domain.isAvailable
-                                    ? AppPallete.kenicGreen
-                                    : AppPallete.greyColor,
-                          ),
-                        ),
-                        if (!domain.isAvailable) ...[
-                          spaceW10,
-                          GestureDetector(
-                            onTap:
-                                () => Get.toNamed(
-                                  '/domain-details',
-                                  arguments: domain,
-                                ),
-                            child: Inter(
-                              text: 'View Details',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              textColor: AppPallete.kenicRed,
-                              underline: true,
-                            ),
-                          ),
-                        ],
-                      ],
+                    Inter(
+                      text: domain.status,
+                      fontSize: 16,
+                      textColor:
+                          domain.isAvailable
+                              ? Colors.green.shade700
+                              : Colors.red.shade700,
                     ),
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Inter(
-                    text: '\$${domain.price.toStringAsFixed(2)}',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    textColor: AppPallete.kenicRed,
-                  ),
-                  Inter(
-                    text: '/year',
-                    fontSize: 12,
-                    fontWeight: FontWeight.normal,
-                    textColor: AppPallete.greyColor,
-                  ),
-                ],
-              ),
             ],
           ),
+          spaceH20,
+          if (domain.kePricing != null) ...[
+            _buildPricingInfo(domain.kePricing!),
+          ],
+          spaceH20,
           if (domain.isAvailable) ...[
-            spaceH15,
-            Row(
-              children: [
-                Expanded(
-                  child: Obx(
-                    () => RoundedButton(
-                      onPressed: () {
-                        if (cartController.isInCart(domain.fullDomainName)) {
-                          Get.toNamed('/cart');
-                        } else {
-                          cartController.addToCart(domain);
-                        }
-                      },
-                      label:
-                          cartController.isInCart(domain.fullDomainName)
-                              ? 'In Cart'
-                              : 'Add to Cart',
-                      height: 40,
-                      fontsize: 14,
-                      backgroundColor:
-                          cartController.isInCart(domain.fullDomainName)
-                              ? AppPallete.kenicGreen
-                              : AppPallete.kenicRed,
-                    ),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  // TODO: Add to cart functionality
+                  Get.snackbar(
+                    'Success',
+                    'Domain added to cart!',
+                    backgroundColor: Colors.green.shade100,
+                    colorText: Colors.green.shade900,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppPallete.kenicRed,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: const Text(
+                  'Add to Cart',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                spaceW10,
-                GestureDetector(
-                  onTap:
-                      () => Get.toNamed('/domain-details', arguments: domain),
-                  child: Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      color: AppPallete.kenicGrey,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: HeroIcon(
-                        HeroIcons.informationCircle,
-                        size: 20,
-                        color: AppPallete.kenicBlack,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ],
@@ -434,94 +223,67 @@ class _DomainSearchResultsState extends State<DomainSearchResults> {
     );
   }
 
-  Widget _buildSuggestionCard(DomainSuggestion suggestion) {
+  Widget _buildSuggestionCard(DomainInfo suggestion) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppPallete.kenicWhite,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color:
-              suggestion.isAvailable
-                  ? AppPallete.kenicGreen
-                  : AppPallete.greyColor.withOpacity(0.3),
-          width: 1,
-        ),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
-            blurRadius: 6,
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Inter(
-                text: suggestion.fullDomainName,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                textAlignment: TextAlign.left,
-                shouldTruncate: true,
-                truncateLength: 15,
-              ),
-              spaceH5,
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color:
-                      suggestion.isAvailable
-                          ? AppPallete.kenicGreen.withOpacity(0.1)
-                          : AppPallete.greyColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Inter(
-                  text: suggestion.isAvailable ? 'Available' : 'Taken',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  textColor:
-                      suggestion.isAvailable
-                          ? AppPallete.kenicGreen
-                          : AppPallete.greyColor,
-                ),
-              ),
-            ],
+          Icon(
+            suggestion.isAvailable ? Icons.check_circle : Icons.cancel,
+            color: suggestion.isAvailable ? Colors.green : Colors.red,
+            size: 24,
           ),
-          if (suggestion.isAvailable) ...[
-            Column(
+          spaceW15,
+          Expanded(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Inter(
-                  text: '\$${suggestion.price.toStringAsFixed(2)}',
-                  fontSize: 16,
+                  text: suggestion.domainName,
+                  fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  textColor: AppPallete.kenicRed,
-                  textAlignment: TextAlign.left,
+                  textColor: AppPallete.kenicBlack,
                 ),
-                spaceH10,
-                SizedBox(
-                  width: double.infinity,
-                  child: RoundedButton(
-                    onPressed: () {
-                      final domain = Domain(
-                        name: suggestion.suggestion,
-                        extension: suggestion.extension,
-                        isAvailable: suggestion.isAvailable,
-                        price: suggestion.price,
-                      );
-                      cartController.addToCart(domain);
-                    },
-                    label: 'Add',
-                    height: 32,
-                    fontsize: 12,
-                  ),
+                Inter(
+                  text: suggestion.status,
+                  fontSize: 14,
+                  textColor:
+                      suggestion.isAvailable
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
                 ),
               ],
+            ),
+          ),
+          if (suggestion.isAvailable) ...[
+            IconButton(
+              onPressed: () {
+                // TODO: Add to cart functionality
+                Get.snackbar(
+                  'Success',
+                  'Domain added to cart!',
+                  backgroundColor: Colors.green.shade100,
+                  colorText: Colors.green.shade900,
+                );
+              },
+              icon: const Icon(
+                Icons.add_shopping_cart,
+                color: AppPallete.kenicRed,
+              ),
             ),
           ],
         ],
@@ -529,76 +291,61 @@ class _DomainSearchResultsState extends State<DomainSearchResults> {
     );
   }
 
-  Widget _buildSearchTips() {
+  Widget _buildPricingInfo(KePricing pricing) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppPallete.kenicGrey,
+        color: AppPallete.kenicWhite,
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Inter(
+            text: 'Pricing (${pricing.currency})',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            textColor: AppPallete.kenicBlack,
+          ),
+          spaceH15,
           Row(
             children: [
-              const HeroIcon(
-                HeroIcons.lightBulb,
-                size: 20,
-                color: AppPallete.kenicRed,
+              Expanded(
+                child: _buildPriceItem(
+                  'Registration',
+                  pricing.registrationPrice,
+                ),
               ),
-              spaceW10,
-              Inter(
-                text: 'Search Tips',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                textAlignment: TextAlign.left,
+              Expanded(child: _buildPriceItem('Renewal', pricing.renewalPrice)),
+              Expanded(
+                child: _buildPriceItem('Transfer', pricing.transferPrice),
               ),
             ],
           ),
-          spaceH10,
-          const _TipItem(tip: 'Try different keywords or variations'),
-          const _TipItem(tip: 'Consider alternative extensions like .co.ke'),
-          const _TipItem(tip: 'Keep it short and memorable'),
-          const _TipItem(tip: 'Avoid hyphens and numbers when possible'),
+          spaceH15,
+          Inter(
+            text: 'Available for ${pricing.availableYears.join(', ')} years',
+            fontSize: 14,
+            textColor: AppPallete.greyColor,
+          ),
         ],
       ),
     );
   }
-}
 
-class _TipItem extends StatelessWidget {
-  final String tip;
-
-  const _TipItem({required this.tip});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 8),
-            height: 4,
-            width: 4,
-            decoration: const BoxDecoration(
-              color: AppPallete.greyColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          spaceW10,
-          Expanded(
-            child: Inter(
-              text: tip,
-              fontSize: 14,
-              fontWeight: FontWeight.normal,
-              textColor: AppPallete.greyColor,
-              textAlignment: TextAlign.left,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildPriceItem(String label, String price) {
+    return Column(
+      children: [
+        Inter(text: label, fontSize: 12, textColor: AppPallete.greyColor),
+        spaceH5,
+        Inter(
+          text: price,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          textColor: AppPallete.kenicRed,
+        ),
+      ],
     );
   }
 }

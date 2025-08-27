@@ -287,96 +287,171 @@ class _HomeDashboardState extends State<HomeDashboard>
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppPallete.kenicWhite,
-        borderRadius: BorderRadius.circular(25),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.15),
-            blurRadius: 25,
-            offset: const Offset(0, 8),
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: TextField(
-        controller: searchController.searchController,
-        decoration: InputDecoration(
-          hintText: 'Search for your perfect domain...',
-          hintStyle: TextStyle(
-            color: AppPallete.greyColor.withOpacity(0.7),
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-          ),
-          prefixIcon: Container(
-            margin: const EdgeInsets.all(12),
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppPallete.kenicRed,
-                  AppPallete.kenicRed.withOpacity(0.8),
-                ],
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: AppPallete.kenicWhite,
+            borderRadius: BorderRadius.circular(25),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.15),
+                blurRadius: 25,
+                offset: const Offset(0, 8),
+                spreadRadius: 0,
               ),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: const HeroIcon(
-              HeroIcons.magnifyingGlass,
-              size: 20,
-              color: AppPallete.kenicWhite,
-            ),
+            ],
           ),
-          suffixIcon: Obx(
-            () => GestureDetector(
-              onTap: () {
-                final query = searchController.searchController.text.trim();
-                if (query.isNotEmpty) {
-                  searchController.searchDomains(query);
-                  Get.toNamed('/search-results');
-                }
-              },
-              child: Container(
+          child: TextField(
+            controller: searchController.searchController,
+            decoration: InputDecoration(
+              hintText: 'Search for your perfect domain...',
+              hintStyle: TextStyle(
+                color: AppPallete.greyColor.withOpacity(0.7),
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+              ),
+              prefixIcon: Container(
                 margin: const EdgeInsets.all(12),
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: AppPallete.kenicBlack,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppPallete.kenicRed,
+                      AppPallete.kenicRed.withOpacity(0.8),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child:
-                    searchController.isSearching.value
-                        ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: AppPallete.kenicWhite,
-                          ),
-                        )
-                        : const HeroIcon(
-                          HeroIcons.arrowRight,
-                          size: 20,
-                          color: AppPallete.kenicWhite,
-                        ),
+                child: const HeroIcon(
+                  HeroIcons.magnifyingGlass,
+                  size: 20,
+                  color: AppPallete.kenicWhite,
+                ),
+              ),
+              suffixIcon: Obx(
+                () => GestureDetector(
+                  onTap: () {
+                    final query = searchController.searchController.text.trim();
+                    if (query.isNotEmpty) {
+                      searchController.searchDomains(query);
+                      Get.toNamed('/search-results');
+                    }
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: AppPallete.kenicBlack,
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child:
+                        searchController.isSearching.value
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: AppPallete.kenicWhite,
+                              ),
+                            )
+                            : const HeroIcon(
+                              HeroIcons.arrowRight,
+                              size: 20,
+                              color: AppPallete.kenicWhite,
+                            ),
+                  ),
+                ),
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 18,
               ),
             ),
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(25),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 18,
+            onChanged: (value) {
+              if (value.trim().isNotEmpty) {
+                searchController.getDomainSuggestions(value.trim());
+              } else {
+                searchController.clearSuggestions();
+              }
+            },
+            onSubmitted: (value) {
+              if (value.trim().isNotEmpty) {
+                searchController.searchDomains(value.trim());
+                Get.toNamed('/search-results');
+              }
+            },
           ),
         ),
-        onSubmitted: (value) {
-          if (value.trim().isNotEmpty) {
-            searchController.searchDomains(value.trim());
-            Get.toNamed('/search-results');
+
+        // Domain Suggestions
+        Obx(() {
+          if (searchController.hasSuggestions) {
+            return Container(
+              margin: const EdgeInsets.only(top: 8),
+              decoration: BoxDecoration(
+                color: AppPallete.kenicWhite,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: searchController.suggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = searchController.suggestions[index];
+                  return ListTile(
+                    leading: Icon(
+                      suggestion.isAvailable
+                          ? Icons.check_circle
+                          : Icons.cancel,
+                      color: suggestion.isAvailable ? Colors.green : Colors.red,
+                    ),
+                    title: Text(
+                      suggestion.domainName,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      suggestion.isAvailable ? 'Available' : 'Not Available',
+                      style: TextStyle(
+                        color:
+                            suggestion.isAvailable ? Colors.green : Colors.red,
+                      ),
+                    ),
+                    trailing:
+                        suggestion.bestRegistrationPrice != null
+                            ? Text(
+                              suggestion.bestRegistrationPrice!,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppPallete.kenicRed,
+                              ),
+                            )
+                            : null,
+                    onTap: () {
+                      searchController.searchController.text =
+                          suggestion.domainName;
+                      searchController.suggestions.clear();
+                      searchController.searchDomains(suggestion.domainName);
+                      Get.toNamed('/search-results');
+                    },
+                  );
+                },
+              ),
+            );
           }
-        },
-      ),
+          return const SizedBox.shrink();
+        }),
+      ],
     );
   }
 

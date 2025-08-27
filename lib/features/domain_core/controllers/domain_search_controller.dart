@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:kenic/core/controller/base_controller.dart';
-import 'package:kenic/features/domain_core/models/domain.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:kenic/core/utils/failure/app_failure.dart';
+import 'package:kenic/features/domain_core/models/models.dart';
+import 'package:kenic/features/domain_core/repository/domain_search_repository.dart';
 
-class DomainSearchController extends BaseController {
+class DomainSearchController extends GetxController {
   static DomainSearchController get instance => Get.find();
 
-  final searchController = TextEditingController();
-  final searchResults = <Domain>[].obs;
-  final aiSuggestions = <DomainSuggestion>[].obs;
-  final trendingKeywords = <String>[].obs;
-  final recentSearches = <String>[].obs;
-  final isSearching = false.obs;
-  final selectedExtensions = <String>['.com', '.co.ke', '.or.ke'].obs;
+  // Repository
+  final DomainSearchRepository _repository = DomainSearchRepository();
 
+  // Controllers
+  final searchController = TextEditingController();
+
+  // Observable variables
+  final searchTerm = ''.obs;
+  final searchResult = Rxn<DomainSearch>();
+  final suggestions = <DomainSuggestionResponse>[].obs;
+  final isLoading = false.obs;
+  final isSearching = false.obs;
+  final errorMessage = ''.obs;
+
+  // Extension management
+  final selectedExtensions = <String>['.com', '.co.ke', '.or.ke'].obs;
   final availableExtensions = [
     '.com',
     '.co.ke',
@@ -26,6 +36,22 @@ class DomainSearchController extends BaseController {
     '.org',
     '.info',
   ];
+
+  // Trending and recent
+  final trendingKeywords =
+      <String>[
+        'tech',
+        'business',
+        'shop',
+        'online',
+        'digital',
+        'kenya',
+        'app',
+        'web',
+        'store',
+        'service',
+      ].obs;
+  final recentSearches = <String>[].obs;
 
   @override
   void onInit() {
@@ -61,140 +87,99 @@ class DomainSearchController extends BaseController {
     recentSearches.value = [];
   }
 
-  Future<void> searchDomains(String query) async {
-    if (query.trim().isEmpty) return;
+  // ==================== DOMAIN SEARCH ====================
+  Future<void> searchDomains(String term) async {
+    if (term.trim().isEmpty) {
+      searchResult.value = null;
+      return;
+    }
 
     isSearching.value = true;
-    setBusy(true);
+    errorMessage.value = '';
+    searchTerm.value = term.trim();
 
     try {
       // Add to recent searches
-      if (!recentSearches.contains(query)) {
-        recentSearches.insert(0, query);
+      if (!recentSearches.contains(term)) {
+        recentSearches.insert(0, term);
         if (recentSearches.length > 10) {
           recentSearches.removeLast();
         }
       }
 
-      // Mock search results - in real app, this would be an API call
-      await Future.delayed(const Duration(milliseconds: 1500));
+      final result = await _repository.searchDomains(searchTerm: term.trim());
 
-      final results = <Domain>[];
-      final suggestions = <DomainSuggestion>[];
-
-      // Generate results for selected extensions
-      for (String extension in selectedExtensions) {
-        final isAvailable = _mockAvailabilityCheck(query + extension);
-        final price = _getPriceForExtension(extension);
-
-        results.add(
-          Domain(
-            name: query,
-            extension: extension,
-            isAvailable: isAvailable,
-            price: price,
-            description:
-                isAvailable
-                    ? 'Available for registration'
-                    : 'Already registered',
-            whoisInfo: isAvailable ? null : _mockWhoisInfo(),
-          ),
-        );
-      }
-
-      // Generate AI suggestions
-      suggestions.addAll(await _generateAISuggestions(query));
-
-      searchResults.value = results;
-      aiSuggestions.value = suggestions;
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to search domains. Please try again.',
-        snackPosition: SnackPosition.BOTTOM,
+      result.fold(
+        (failure) {
+          errorMessage.value = failure.message;
+          searchResult.value = null;
+        },
+        (domainSearch) {
+          searchResult.value = domainSearch;
+        },
       );
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred';
+      searchResult.value = null;
     } finally {
       isSearching.value = false;
-      setBusy(false);
     }
   }
 
-  Future<List<DomainSuggestion>> _generateAISuggestions(String query) async {
-    // Mock AI suggestions - in real app, this would be an AI service call
-    final suggestions = <DomainSuggestion>[];
-    final variations = [
-      '${query}hub',
-      '${query}pro',
-      'my$query',
-      '${query}zone',
-      'get$query',
-      '${query}live',
-      '${query}plus',
-      'i$query',
-    ];
-
-    for (String variation in variations.take(6)) {
-      for (String extension in ['.com', '.co.ke', '.net']) {
-        suggestions.add(
-          DomainSuggestion(
-            keyword: query,
-            suggestion: variation,
-            extension: extension,
-            price: _getPriceForExtension(extension),
-            isAvailable: _mockAvailabilityCheck(variation + extension),
-            type: 'ai_generated',
-          ),
-        );
-      }
+  // ==================== DOMAIN SUGGESTIONS ====================
+  Future<void> getDomainSuggestions(String term) async {
+    if (term.trim().isEmpty) {
+      suggestions.clear();
+      return;
     }
 
-    return suggestions.where((s) => s.isAvailable).take(8).toList();
-  }
+    isLoading.value = true;
+    errorMessage.value = '';
 
-  bool _mockAvailabilityCheck(String domain) {
-    // Mock availability - in real app, this would be an API call
-    final hash = domain.hashCode;
-    return hash % 3 != 0; // ~66% availability rate
-  }
+    try {
+      final result = await _repository.getDomainSuggestions(
+        searchTerm: term.trim(),
+      );
 
-  double _getPriceForExtension(String extension) {
-    switch (extension) {
-      case '.com':
-        return 12.99;
-      case '.co.ke':
-        return 8.50;
-      case '.or.ke':
-        return 6.00;
-      case '.ac.ke':
-        return 7.50;
-      case '.go.ke':
-        return 10.00;
-      case '.ne.ke':
-        return 6.50;
-      case '.sc.ke':
-        return 8.00;
-      case '.net':
-        return 14.99;
-      case '.org':
-        return 13.99;
-      case '.info':
-        return 11.99;
-      default:
-        return 15.99;
+      result.fold(
+        (failure) {
+          errorMessage.value = failure.message;
+          suggestions.clear();
+        },
+        (suggestionsList) {
+          suggestions.value = suggestionsList;
+        },
+      );
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred';
+      suggestions.clear();
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  WhoisInfo _mockWhoisInfo() {
-    return WhoisInfo(
-      registrant: 'Private Registration',
-      registrarName: 'Kenya Network Information Centre',
-      registrationDate: DateTime.now().subtract(const Duration(days: 365)),
-      expiryDate: DateTime.now().add(const Duration(days: 365)),
-      nameServers: ['ns1.example.com', 'ns2.example.com'],
-      status: 'Active',
-    );
+  // ==================== UTILITY METHODS ====================
+  void clearSearch() {
+    searchController.clear();
+    searchTerm.value = '';
+    searchResult.value = null;
+    suggestions.clear();
+    errorMessage.value = '';
   }
 
+  void clearError() {
+    errorMessage.value = '';
+  }
+
+  void clearSuggestions() {
+    suggestions.clear();
+  }
+
+  bool get hasSearchResults => searchResult.value != null;
+  bool get hasSuggestions => suggestions.isNotEmpty;
+  bool get hasError => errorMessage.value.isNotEmpty;
+
+  // Extension management methods
   void toggleExtension(String extension) {
     if (selectedExtensions.contains(extension)) {
       if (selectedExtensions.length > 1) {
@@ -205,12 +190,7 @@ class DomainSearchController extends BaseController {
     }
   }
 
-  void clearSearch() {
-    searchController.clear();
-    searchResults.clear();
-    aiSuggestions.clear();
-  }
-
+  // Search from keyword
   void searchFromKeyword(String keyword) {
     searchController.text = keyword;
     searchDomains(keyword);
