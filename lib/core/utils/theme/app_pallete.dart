@@ -9,4 +9,5 @@ class AppPallete {
   static const Color kenicWhite = Color(0xFFFFFFFF);
   static const Color kenicGrey = Color(0xFFEEEEEE);
   static const Color greyColor = Color(0xFF707070);
+  static const Color scaffoldBg = Color(0xFFF2F2F2);
 }

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:fpdart/fpdart.dart';
-import 'package:kenic/core/utils/failure/app_failure.dart';
 import 'package:kenic/features/domain_core/models/models.dart';
 import 'package:kenic/features/domain_core/repository/domain_search_repository.dart';
 
@@ -25,16 +23,14 @@ class DomainSearchController extends GetxController {
   // Extension management
   final selectedExtensions = <String>['.com', '.co.ke', '.or.ke'].obs;
   final availableExtensions = [
-    '.com',
+    '.ke',
     '.co.ke',
     '.or.ke',
     '.ac.ke',
     '.go.ke',
     '.ne.ke',
     '.sc.ke',
-    '.net',
-    '.org',
-    '.info',
+    '.go.ke',
   ];
 
   // Trending and recent
@@ -123,38 +119,6 @@ class DomainSearchController extends GetxController {
       searchResult.value = null;
     } finally {
       isSearching.value = false;
-    }
-  }
-
-  // ==================== DOMAIN SUGGESTIONS ====================
-  Future<void> getDomainSuggestions(String term) async {
-    if (term.trim().isEmpty) {
-      suggestions.clear();
-      return;
-    }
-
-    isLoading.value = true;
-    errorMessage.value = '';
-
-    try {
-      final result = await _repository.getDomainSuggestions(
-        searchTerm: term.trim(),
-      );
-
-      result.fold(
-        (failure) {
-          errorMessage.value = failure.message;
-          suggestions.clear();
-        },
-        (suggestionsList) {
-          suggestions.value = suggestionsList;
-        },
-      );
-    } catch (e) {
-      errorMessage.value = 'An unexpected error occurred';
-      suggestions.clear();
-    } finally {
-      isLoading.value = false;
     }
   }
 

@@ -24,6 +24,7 @@ class CartController extends BaseController {
   final appliedPromoCode = ''.obs;
   final promoDiscount = 0.0.obs;
   final isProcessingPayment = false.obs;
+  final isAddingToCart = false.obs;
 
   // API data
   final cartId = Rxn<int>();
@@ -187,7 +188,8 @@ class CartController extends BaseController {
   }
 
   /// Add DomainInfo to cart using the API
-  Future<void> addDomainInfoToCart(
+  /// Returns true if the item was successfully added to cart
+  Future<bool> addDomainInfoToCart(
     DomainInfo domainInfo, {
     int registrationYears = 1,
   }) async {
@@ -199,9 +201,10 @@ class CartController extends BaseController {
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade900,
       );
-      return;
+      return false;
     }
 
+    isAddingToCart.value = true;
     setBusy(true);
 
     try {
@@ -213,7 +216,7 @@ class CartController extends BaseController {
         registrationYears: registrationYears,
       );
 
-      result.fold(
+      return result.fold(
         (failure) {
           Get.snackbar(
             'Error',
@@ -222,21 +225,45 @@ class CartController extends BaseController {
             backgroundColor: Colors.red.shade100,
             colorText: Colors.red.shade900,
           );
+          return false;
         },
-        (success) {
+        (success) async {
           if (success) {
-            // Convert DomainInfo to Domain and add to local cart
-            final domain = DomainConverter.domainInfoToDomain(domainInfo);
-            addToCart(domain, registrationYears: registrationYears);
+            try {
+              // Convert DomainInfo to Domain and add to local cart
+              final domain = DomainConverter.domainInfoToDomain(domainInfo);
+              addToCart(domain, registrationYears: registrationYears);
 
-            Get.snackbar(
-              'Success',
-              '${domainInfo.domainName} has been added to your cart',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.green.shade100,
-              colorText: Colors.green.shade900,
-            );
+              // Force refresh the cart to update UI
+              cart.refresh();
+
+              // Show success message and navigation options
+              Get.snackbar(
+                'Added to Cart',
+                '${domainInfo.domainName} has been added to your cart',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: Colors.green.shade100,
+                colorText: Colors.green.shade900,
+                duration: const Duration(seconds: 4),
+                mainButton: TextButton(
+                  onPressed: () => Get.toNamed('/cart'),
+                  child: const Text(
+                    'VIEW CART',
+                    style: TextStyle(
+                      color: Colors.green,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              );
+
+              return true;
+            } catch (e) {
+              debugPrint('Error updating local cart: $e');
+              return false;
+            }
           }
+          return false;
         },
       );
     } catch (e) {
@@ -247,7 +274,9 @@ class CartController extends BaseController {
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade900,
       );
+      return false;
     } finally {
+      isAddingToCart.value = false;
       setBusy(false);
     }
   }
@@ -545,7 +574,15 @@ class CartController extends BaseController {
   }
 
   bool isInCart(String domainName) {
-    return cart.value.containsDomain(domainName);
+    // Normalize the domain name to ensure consistent comparison
+    final normalizedDomainName = domainName.toLowerCase().trim();
+
+    // Check using normalized domain names
+    return cart.value.items.any(
+      (item) =>
+          item.domain.fullDomainName.toLowerCase().trim() ==
+          normalizedDomainName,
+    );
   }
 
   CartItem? getCartItem(String domainName) {

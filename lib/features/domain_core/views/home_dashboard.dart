@@ -372,13 +372,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                 vertical: 18,
               ),
             ),
-            onChanged: (value) {
-              if (value.trim().isNotEmpty) {
-                searchController.getDomainSuggestions(value.trim());
-              } else {
-                searchController.clearSuggestions();
-              }
-            },
+
             onSubmitted: (value) {
               if (value.trim().isNotEmpty) {
                 searchController.searchDomains(value.trim());
@@ -495,22 +489,6 @@ class _HomeDashboardState extends State<HomeDashboard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Section Title
-          Inter(
-            text: 'Domains',
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            textColor: AppPallete.kenicBlack,
-          ),
-          spaceH10,
-          Inter(
-            text: 'Find your perfect domain name',
-            fontSize: 18,
-            fontWeight: FontWeight.normal,
-            textColor: AppPallete.greyColor,
-          ),
-          spaceH30,
-
           // Domain Search Suggestion Card
           Container(
             padding: const EdgeInsets.all(24),
@@ -620,11 +598,11 @@ class _HomeDashboardState extends State<HomeDashboard>
                       // Domain suggestions
                       Column(
                         children: [
-                          _buildDomainSuggestion('kenic-domains.com', true),
+                          _buildDomainSuggestion('kenic-domains.ke', true),
                           spaceH5,
                           _buildDomainSuggestion('kenic-domains.co.ke', false),
                           spaceH5,
-                          _buildDomainSuggestion('kenic-domains.org', false),
+                          _buildDomainSuggestion('kenic-domains.or.ke', false),
                         ],
                       ),
                     ],
@@ -663,7 +641,13 @@ class _HomeDashboardState extends State<HomeDashboard>
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Inter(
-                        text: '.co.ke for \$8.50/1st year',
+                        text: '.co.ke for',
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        textColor: AppPallete.kenicWhite,
+                      ),
+                      Inter(
+                        text: 'KES 999/1st year',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         textColor: AppPallete.kenicWhite,
@@ -854,7 +838,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Inter(
-                              text: '\$${_getPriceForExtension(extension)}',
+                              text: 'KES ${_getPriceForExtension(extension)}',
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                               textColor:
@@ -1021,23 +1005,23 @@ class _HomeDashboardState extends State<HomeDashboard>
   double _getPriceForExtension(String extension) {
     switch (extension) {
       case '.ke':
-        return 5.00;
+        return 999;
       case '.co.ke':
-        return 8.50;
+        return 999;
       case '.or.ke':
-        return 6.00;
+        return 999;
       case '.ac.ke':
-        return 7.50;
+        return 1349;
       case '.sc.ke':
         return 6.50;
       case '.go.ke':
-        return 10.00;
+        return 1000;
       case '.ne.ke':
-        return 8.00;
+        return 800;
       case '.me.ke':
-        return 7.00;
+        return 700;
       case '.com':
-        return 12.99;
+        return 1299;
       case '.net':
         return 14.99;
       case '.org':

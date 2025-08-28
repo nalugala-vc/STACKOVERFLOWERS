@@ -59,9 +59,15 @@ class DomainConverter {
   static Domain domainInfoToDomain(DomainInfo domainInfo) {
     final price = getFirstYearPrice(domainInfo);
 
+    // Split the domain name to get SLD and TLD consistently
+    final domainParts = domainInfo.domainName.split('.');
+    final sld = domainParts.first;
+    final tld =
+        domainParts.length > 1 ? '.${domainParts.sublist(1).join('.')}' : '';
+
     return Domain(
-      name: domainInfo.sld,
-      extension: domainInfo.tld,
+      name: sld,
+      extension: tld,
       isAvailable: domainInfo.isAvailable,
       price: price,
       description: 'Domain registration for ${domainInfo.domainName}',
