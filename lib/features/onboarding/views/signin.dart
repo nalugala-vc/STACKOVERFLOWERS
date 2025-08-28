@@ -110,7 +110,7 @@ class _SigninState extends State<Signin> {
                         );
 
                         if (result.isRight()) {
-                          Get.offAllNamed('/home');
+                          Get.offAllNamed('/main');
                         } else {
                           result.fold(
                             (failure) => Get.snackbar(

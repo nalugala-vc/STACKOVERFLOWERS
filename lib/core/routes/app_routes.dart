@@ -12,6 +12,8 @@ import 'package:kenic/features/domain_core/views/payment_confirmation.dart';
 import 'package:kenic/features/navigation/views/main_navigation.dart';
 import 'package:kenic/features/orders/views/orders_page.dart';
 import 'package:kenic/features/profile/views/profile_page.dart';
+import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
+import 'package:kenic/features/onboarding/views/change_password.dart';
 
 class AppRoutes {
   static final authMiddleware = AuthMiddleware();
@@ -78,6 +80,11 @@ class AppRoutes {
     GetPage(
       name: '/payment-confirmation',
       page: () => const PaymentConfirmation(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: OnboardingRoutes.changePassword,
+      page: () => const ChangePasswordPage(),
       middlewares: [authMiddleware],
     ),
   ];

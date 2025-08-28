@@ -5,6 +5,8 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
+import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
+import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -105,7 +107,7 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.key,
                       title: 'Change Password',
                       subtitle: 'Update your password',
-                      onTap: () {},
+                      onTap: () => Get.toNamed(OnboardingRoutes.changePassword),
                     ),
                   ]),
                   spaceH30,
@@ -147,7 +149,15 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.arrowRightOnRectangle,
                       title: 'Sign Out',
                       subtitle: 'Sign out of your account',
-                      onTap: () => _showSignOutDialog(context),
+                      onTap: () => CustomDialogs.showLogoutDialog(context),
+                      isDestructive: true,
+                    ),
+                    _buildProfileItem(
+                      icon: HeroIcons.trash,
+                      title: 'Delete Account',
+                      subtitle: 'Permanently delete your account',
+                      onTap:
+                          () => CustomDialogs.showDeleteAccountDialog(context),
                       isDestructive: true,
                     ),
                   ]),
@@ -242,30 +252,5 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Sign Out'),
-          content: const Text('Are you sure you want to sign out?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Implement sign out logic here
-                Get.offAllNamed('/signin');
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              child: const Text('Sign Out'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Dialogs moved to CustomDialogs class
 }

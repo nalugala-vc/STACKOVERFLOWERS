@@ -20,7 +20,6 @@ class OnboardingController extends BaseController {
   final phone = TextEditingController();
   final password = TextEditingController();
   final confirmPassword = TextEditingController();
-  final newPassword = TextEditingController();
   final otp = TextEditingController();
 
   // Observable variables
@@ -28,6 +27,14 @@ class OnboardingController extends BaseController {
   final errorMessage = ''.obs;
   final isLoggedIn = false.obs;
   final currentUser = Rxn<User>();
+
+  // Change Password Controllers
+  final currentPassword = TextEditingController();
+  final newPassword = TextEditingController();
+  final confirmNewPassword = TextEditingController();
+
+  // Delete Account Controller
+  final deleteAccountPassword = TextEditingController();
 
   @override
   void onInit() {
@@ -55,8 +62,70 @@ class OnboardingController extends BaseController {
     password.dispose();
     confirmPassword.dispose();
     newPassword.dispose();
+    currentPassword.dispose();
+    confirmNewPassword.dispose();
     otp.dispose();
     super.onClose();
+  }
+
+  // ==================== CHANGE PASSWORD ====================
+  Future<Either<AppFailure, String>> changePassword() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      if (!validateChangePasswordForm()) {
+        return Left(AppFailure(errorMessage.value));
+      }
+
+      final result = await _repository.changePassword(
+        currentPassword: currentPassword.text,
+        newPassword: newPassword.text,
+      );
+
+      if (result.isRight()) {
+        // Clear the password fields
+        currentPassword.clear();
+        newPassword.clear();
+        confirmNewPassword.clear();
+      }
+
+      return result;
+    } catch (e) {
+      return Left(AppFailure('Change password error: ${e.toString()}'));
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  bool validateChangePasswordForm() {
+    final currentPasswordError = validatePassword(currentPassword.text);
+    final newPasswordError = validatePassword(newPassword.text);
+    final confirmNewPasswordError = validateConfirmPassword(
+      newPassword.text,
+      confirmNewPassword.text,
+    );
+
+    if (currentPasswordError != null) {
+      errorMessage.value = currentPasswordError;
+      return false;
+    }
+    if (newPasswordError != null) {
+      errorMessage.value = newPasswordError;
+      return false;
+    }
+    if (confirmNewPasswordError != null) {
+      errorMessage.value = confirmNewPasswordError;
+      return false;
+    }
+
+    if (currentPassword.text == newPassword.text) {
+      errorMessage.value =
+          'New password must be different from current password';
+      return false;
+    }
+
+    return true;
   }
 
   // ==================== USER REGISTRATION ====================
@@ -256,12 +325,47 @@ class OnboardingController extends BaseController {
     currentStep.value = step;
   }
 
-  void logout() async {
+  Future<void> logout() async {
+    await _clearTokenFromPreferences();
+    await _clearLocalData();
     isLoggedIn.value = false;
     currentUser.value = null;
-    await _clearTokenFromPreferences();
     clearError();
     Get.offAllNamed('/signin');
+  }
+
+  Future<void> _clearLocalData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); // This clears all local data
+  }
+
+  Future<Either<AppFailure, String>> deleteAccount() async {
+    isLoading.value = true;
+    errorMessage.value = '';
+
+    try {
+      if (deleteAccountPassword.text.isEmpty) {
+        return Left(AppFailure('Password is required'));
+      }
+
+      final result = await _repository.deleteUser(
+        password: deleteAccountPassword.text,
+      );
+
+      if (result.isRight()) {
+        // Clear all local data and reset state
+        await _clearLocalData();
+        isLoggedIn.value = false;
+        currentUser.value = null;
+        deleteAccountPassword.clear();
+      }
+
+      return result;
+    } catch (e) {
+      return Left(AppFailure('Delete account error: ${e.toString()}'));
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   // ==================== FORM VALIDATION ====================

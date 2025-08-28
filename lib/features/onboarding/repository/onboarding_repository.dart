@@ -159,4 +159,62 @@ class OnboardingRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  // ==================== CHANGE PASSWORD ====================
+  Future<Either<AppFailure, String>> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final headers = await AppConfigs.authorizedHeaders();
+    final body = jsonEncode({
+      "current_password": currentPassword,
+      "password": newPassword,
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfigs.appBaseUrl + Endpoints.changePassword),
+        headers: headers,
+        body: body,
+      );
+
+      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final message = resBodyMap['message'] ?? 'Failed to change password';
+        return Left(AppFailure(message));
+      }
+
+      return Right(resBodyMap['message'] ?? 'Password changed successfully');
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  // ==================== DELETE USER ====================
+  Future<Either<AppFailure, String>> deleteUser({
+    required String password,
+  }) async {
+    final headers = await AppConfigs.authorizedHeaders();
+    final body = jsonEncode({"password": password});
+
+    try {
+      final response = await http.delete(
+        Uri.parse(AppConfigs.appBaseUrl + Endpoints.deleteUser),
+        headers: headers,
+        body: body,
+      );
+
+      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final message = resBodyMap['message'] ?? 'Failed to delete account';
+        return Left(AppFailure(message));
+      }
+
+      return Right(resBodyMap['message'] ?? 'Account deleted successfully');
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }

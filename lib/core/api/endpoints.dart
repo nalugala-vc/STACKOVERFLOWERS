@@ -4,6 +4,8 @@ class Endpoints {
   static const String register = '/api/signup';
   static const String sendOTP = '/api/otp/send';
   static const String verifyOtp = '/api/otp/verify';
+  static const String changePassword = '/api/password/change';
+  static const String deleteUser = '/api/user/delete';
 
   //Domain
   static const String domainSearch = '/api/domains/search';

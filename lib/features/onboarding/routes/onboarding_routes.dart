@@ -6,6 +6,7 @@ import 'package:kenic/features/onboarding/views/reset_password.dart';
 import 'package:kenic/features/onboarding/views/verify_email.dart';
 import 'package:kenic/features/onboarding/views/verify_otp.dart';
 import 'package:kenic/features/onboarding/views/verify_phone.dart';
+import 'package:kenic/features/onboarding/views/change_password.dart';
 
 class OnboardingRoutes {
   static const String signin = '/signin';
@@ -15,6 +16,7 @@ class OnboardingRoutes {
   static const String verifyEmail = '/verify-email';
   static const String verifyOtp = '/verify-otp';
   static const String verifyPhone = '/verify-phone';
+  static const String changePassword = '/change-password';
 
   static List<GetPage> routes = [
     GetPage(name: signin, page: () => const Signin()),
@@ -24,5 +26,6 @@ class OnboardingRoutes {
     GetPage(name: verifyEmail, page: () => const VerifyEmail()),
     GetPage(name: verifyOtp, page: () => const VerifyOtp()),
     GetPage(name: verifyPhone, page: () => const VerifyPhone()),
+    GetPage(name: changePassword, page: () => const ChangePasswordPage()),
   ];
 }
