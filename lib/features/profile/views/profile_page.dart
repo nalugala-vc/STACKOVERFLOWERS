@@ -8,6 +8,7 @@ import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
 import 'package:kenic/features/profile/views/contact_info_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -129,7 +130,13 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.documentText,
                       title: 'Terms & Privacy',
                       subtitle: 'Read our terms and privacy policy',
-                      onTap: () {},
+                      onTap:
+                          () => launchUrl(
+                            Uri.parse(
+                              'https://kenic.or.ke/wp-content/uploads/2024/05/PRIVACY-NOTICE.pdf',
+                            ),
+                            mode: LaunchMode.externalApplication,
+                          ),
                     ),
                   ]),
                   spaceH30,
