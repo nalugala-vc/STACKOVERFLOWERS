@@ -385,8 +385,9 @@ class _CartCheckoutState extends State<CartCheckout> {
                 Expanded(
                   flex: 2,
                   child: RoundedButton(
-                    onPressed: () => Get.toNamed('/checkout-page'),
+                    onPressed: () => cartController.createOrder(),
                     label: 'Create Order',
+                    isLoading: cartController.isLoading.value,
                   ),
                 ),
               ],

@@ -11,4 +11,7 @@ class Endpoints {
 
   //Cart
   static const String cart = '/api/cart';
+
+  //Orders
+  static const String orders = '/api/orders';
 }

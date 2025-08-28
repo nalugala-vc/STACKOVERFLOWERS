@@ -6,6 +6,7 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
+import 'package:kenic/features/domain_core/models/payment.dart';
 
 class PaymentConfirmation extends StatefulWidget {
   const PaymentConfirmation({super.key});
@@ -23,20 +24,21 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
   @override
   void initState() {
     super.initState();
-    receipt = Get.arguments as Map<String, dynamic>;
-    
+    final args = Get.arguments;
+    if (args == null) {
+      Get.offAllNamed('/home');
+      return;
+    }
+    receipt = args as Map<String, dynamic>;
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
-    _scaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.elasticOut,
-    ));
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+    );
 
     _animationController.forward();
   }
@@ -191,16 +193,23 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
           spaceH20,
 
           // Receipt Info
-          _buildReceiptRow('Receipt #', receipt['transactionId'] ?? 'N/A'),
-          _buildReceiptRow('Date', _formatDate(receipt['date'])),
-          _buildReceiptRow('Payment Method', _formatPaymentMethod(receipt['paymentMethod'])),
-          _buildReceiptRow('Status', 'Completed', valueColor: AppPallete.kenicGreen),
-          
+          _buildReceiptRow('Receipt #', receipt['id']?.toString() ?? 'N/A'),
+          _buildReceiptRow('Date', _formatDate(receipt['created_at'])),
+          _buildReceiptRow(
+            'Payment Method',
+            _formatPaymentMethod(receipt['payment_method']),
+          ),
+          _buildReceiptRow(
+            'Status',
+            receipt['status'] ?? 'N/A',
+            valueColor: AppPallete.kenicGreen,
+          ),
+
           const Divider(color: AppPallete.kenicGrey, thickness: 1),
-          
+
           _buildReceiptRow(
             'Total Amount',
-            '\$${receipt['amount'].toStringAsFixed(2)}',
+            'KES ${receipt['amount']?.toString() ?? '0'}',
             isTotal: true,
           ),
         ],
@@ -208,7 +217,12 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
     );
   }
 
-  Widget _buildReceiptRow(String label, String value, {Color? valueColor, bool isTotal = false}) {
+  Widget _buildReceiptRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool isTotal = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -224,7 +238,9 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
             text: value,
             fontSize: isTotal ? 18 : 14,
             fontWeight: isTotal ? FontWeight.bold : FontWeight.w600,
-            textColor: valueColor ?? (isTotal ? AppPallete.kenicRed : AppPallete.kenicBlack),
+            textColor:
+                valueColor ??
+                (isTotal ? AppPallete.kenicRed : AppPallete.kenicBlack),
           ),
         ],
       ),
@@ -286,7 +302,7 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
                   children: [
                     Expanded(
                       child: Inter(
-                        text: receipt['transactionId'] ?? 'N/A',
+                        text: receipt['transaction_id']?.toString() ?? 'N/A',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                         textAlignment: TextAlign.left,
@@ -325,8 +341,9 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
   }
 
   Widget _buildDomainsList() {
-    final domains = List<String>.from(receipt['domains'] ?? []);
-    
+    // For now, we don't have domains in the payment response
+    final domains = <String>[];
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -360,63 +377,70 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
             ],
           ),
           spaceH20,
-          ...domains.map((domain) => Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppPallete.kenicGrey,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: AppPallete.kenicGreen.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+          ...domains.map(
+            (domain) => Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppPallete.kenicGrey,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppPallete.kenicGreen.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const HeroIcon(
+                      HeroIcons.checkCircle,
+                      size: 16,
+                      color: AppPallete.kenicGreen,
+                    ),
                   ),
-                  child: const HeroIcon(
-                    HeroIcons.checkCircle,
+                  spaceW15,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Inter(
+                          text: domain,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          textAlignment: TextAlign.left,
+                        ),
+                        spaceH5,
+                        Inter(
+                          text: 'Active - Ready to use',
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          textColor: AppPallete.kenicGreen,
+                          textAlignment: TextAlign.left,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const HeroIcon(
+                    HeroIcons.arrowTopRightOnSquare,
                     size: 16,
-                    color: AppPallete.kenicGreen,
+                    color: AppPallete.greyColor,
                   ),
-                ),
-                spaceW15,
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Inter(
-                        text: domain,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        textAlignment: TextAlign.left,
-                      ),
-                      spaceH5,
-                      Inter(
-                        text: 'Active - Ready to use',
-                        fontSize: 12,
-                        fontWeight: FontWeight.normal,
-                        textColor: AppPallete.kenicGreen,
-                        textAlignment: TextAlign.left,
-                      ),
-                    ],
-                  ),
-                ),
-                const HeroIcon(
-                  HeroIcons.arrowTopRightOnSquare,
-                  size: 16,
-                  color: AppPallete.greyColor,
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoCard(String title, String description, HeroIcons icon, Color color) {
+  Widget _buildInfoCard(
+    String title,
+    String description,
+    HeroIcons icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -426,11 +450,7 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          HeroIcon(
-            icon,
-            size: 20,
-            color: color,
-          ),
+          HeroIcon(icon, size: 20, color: color),
           spaceW12,
           Expanded(
             child: Column(
@@ -529,7 +549,10 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
               GestureDetector(
                 onTap: () => Get.toNamed('/support'),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: AppPallete.kenicRed,
                     borderRadius: BorderRadius.circular(16),

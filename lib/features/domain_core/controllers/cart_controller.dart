@@ -4,14 +4,18 @@ import 'package:kenic/core/controller/base_controller.dart';
 import 'package:kenic/features/domain_core/models/cart.dart';
 import 'package:kenic/features/domain_core/models/domain.dart';
 import 'package:kenic/features/domain_core/models/models.dart';
+import 'package:kenic/features/domain_core/models/order.dart';
+import 'package:kenic/features/domain_core/models/payment.dart';
 import 'package:kenic/features/domain_core/repository/cart_repository.dart';
+import 'package:kenic/features/domain_core/repository/order_repository.dart';
 import 'package:kenic/features/domain_core/utils/domain_converter.dart';
 
 class CartController extends BaseController {
   static CartController get instance => Get.find();
 
-  // Repository
-  final CartRepository _repository = CartRepository();
+  // Repositories
+  final CartRepository _cartRepository = CartRepository();
+  final OrderRepository _orderRepository = OrderRepository();
 
   final cart = Cart.empty().obs;
   final selectedPaymentMethod = PaymentMethod.mpesa.obs;
@@ -23,6 +27,7 @@ class CartController extends BaseController {
   // API data
   final cartId = Rxn<int>();
   final cartItemsWithIds = <Map<String, dynamic>>[].obs;
+  final orderId = Rxn<int>();
 
   @override
   void onInit() {
@@ -47,7 +52,7 @@ class CartController extends BaseController {
     setBusy(true);
 
     try {
-      final result = await _repository.getCart();
+      final result = await _cartRepository.getCart();
 
       result.fold(
         (failure) {
@@ -201,7 +206,7 @@ class CartController extends BaseController {
     try {
       final price = DomainConverter.getFirstYearPrice(domainInfo);
 
-      final result = await _repository.addToCart(
+      final result = await _cartRepository.addToCart(
         domainName: domainInfo.domainName,
         price: price,
         registrationYears: registrationYears,
@@ -268,7 +273,7 @@ class CartController extends BaseController {
     setBusy(true);
 
     try {
-      final result = await _repository.removeFromCart(itemId);
+      final result = await _cartRepository.removeFromCart(itemId);
 
       result.fold(
         (failure) {
@@ -345,7 +350,7 @@ class CartController extends BaseController {
     setBusy(true);
 
     try {
-      final result = await _repository.clearCart(cartIdValue);
+      final result = await _cartRepository.clearCart(cartIdValue);
 
       result.fold(
         (failure) {
@@ -458,78 +463,6 @@ class CartController extends BaseController {
     selectedPaymentMethod.value = method;
   }
 
-  Future<Map<String, dynamic>?> processPayment(
-    PaymentDetails paymentDetails,
-  ) async {
-    if (cart.value.isEmpty) {
-      Get.snackbar(
-        'Empty Cart',
-        'Please add domains to your cart before proceeding.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return null;
-    }
-
-    isProcessingPayment.value = true;
-    setBusy(true);
-
-    try {
-      // Mock payment processing - in real app, this would be a payment gateway call
-      await Future.delayed(const Duration(seconds: 3));
-
-      // Simulate payment success/failure
-      final isSuccess = _mockPaymentProcess();
-
-      if (isSuccess) {
-        final transactionId = _generateTransactionId();
-        final receipt = {
-          'transactionId': transactionId,
-          'amount': cart.value.total,
-          'domains':
-              cart.value.items
-                  .map((item) => item.domain.fullDomainName)
-                  .toList(),
-          'paymentMethod': paymentDetails.method.name,
-          'date': DateTime.now().toIso8601String(),
-          'status': 'success',
-        };
-
-        // Clear cart after successful payment
-        clearCart();
-
-        return receipt;
-      } else {
-        Get.snackbar(
-          'Payment Failed',
-          'Your payment could not be processed. Please try again.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return null;
-      }
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'An error occurred while processing your payment.',
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return null;
-    } finally {
-      isProcessingPayment.value = false;
-      setBusy(false);
-    }
-  }
-
-  bool _mockPaymentProcess() {
-    // Mock 90% success rate
-    return DateTime.now().millisecond % 10 != 0;
-  }
-
-  String _generateTransactionId() {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final random = timestamp % 10000;
-    return 'TXN${timestamp.toString().substring(8)}$random';
-  }
-
   void _saveCart() {
     // In real app, save to shared preferences or sync with backend
   }
@@ -545,5 +478,146 @@ class CartController extends BaseController {
   /// Refresh cart from API
   Future<void> refreshCart() async {
     await fetchCartFromAPI();
+  }
+
+  /// Create order from cart
+  Future<void> createOrder() async {
+    if (cart.value.isEmpty) {
+      Get.snackbar(
+        'Empty Cart',
+        'Please add domains to your cart before creating an order.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    setBusy(true);
+
+    try {
+      final result = await _orderRepository.createOrder();
+
+      result.fold(
+        (failure) {
+          Get.snackbar(
+            'Error',
+            failure.message,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.shade100,
+            colorText: Colors.red.shade900,
+          );
+        },
+        (response) {
+          if (response.success && response.data != null) {
+            orderId.value = response.data!.id;
+            Get.toNamed('/checkout-page');
+          } else {
+            Get.snackbar(
+              'Error',
+              response.message,
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red.shade100,
+              colorText: Colors.red.shade900,
+            );
+          }
+        },
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred while creating the order',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /// Process payment for the order
+  Future<void> processPayment({
+    String? phoneNumber,
+    String? cardNumber,
+    String? cvv,
+    String? expiryMonth,
+    String? expiryYear,
+  }) async {
+    if (orderId.value == null) {
+      Get.snackbar(
+        'Error',
+        'No active order found. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    isProcessingPayment.value = true;
+    setBusy(true);
+
+    try {
+      final result = await _orderRepository.payOrder(
+        orderId: orderId.value!,
+        paymentMethod: selectedPaymentMethod.value,
+        phoneNumber: phoneNumber,
+        cardDetails:
+            selectedPaymentMethod.value == PaymentMethod.card
+                ? CardPaymentDetails(
+                  cardNumber: cardNumber ?? '',
+                  cvv: cvv ?? '',
+                  expiryMonth: expiryMonth ?? '',
+                  expiryYear: expiryYear ?? '',
+                )
+                : null,
+      );
+
+      result.fold(
+        (failure) {
+          Get.snackbar(
+            'Payment Failed',
+            failure.message,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.shade100,
+            colorText: Colors.red.shade900,
+          );
+        },
+        (response) {
+          if (response.success) {
+            // Clear cart after successful payment
+            cart.value = Cart.empty();
+            appliedPromoCode.value = '';
+            promoDiscount.value = 0.0;
+            promoCodeController.clear();
+            cartItemsWithIds.clear();
+            cartId.value = null;
+            orderId.value = null;
+
+            // Pass payment data to confirmation page
+            Get.offAllNamed(
+              '/payment-confirmation',
+              arguments: response.data?.toJson(),
+            );
+          } else {
+            Get.snackbar(
+              'Payment Failed',
+              response.message,
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.red.shade100,
+              colorText: Colors.red.shade900,
+            );
+          }
+        },
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred while processing payment',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+    } finally {
+      isProcessingPayment.value = false;
+      setBusy(false);
+    }
   }
 }

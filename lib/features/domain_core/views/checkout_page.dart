@@ -7,7 +7,7 @@ import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
-import 'package:kenic/features/domain_core/models/cart.dart';
+import 'package:kenic/features/domain_core/models/order.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -388,12 +388,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
           'description': 'Pay with Visa, Mastercard, or American Express',
           'icon': 'assets/logo.png', // Replace with card icon
         };
-      case PaymentMethod.airtelMoney:
-        return {
-          'name': 'Airtel Money',
-          'description': 'Pay with your Airtel Money wallet',
-          'icon': 'assets/logo.png', // Replace with Airtel Money icon
-        };
     }
   }
 
@@ -401,7 +395,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
     return Obx(() {
       switch (cartController.selectedPaymentMethod.value) {
         case PaymentMethod.mpesa:
-        case PaymentMethod.airtelMoney:
           return _buildMobilePaymentDetails();
         case PaymentMethod.card:
           return _buildCardPaymentDetails();
@@ -410,9 +403,6 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildMobilePaymentDetails() {
-    final isAirtel =
-        cartController.selectedPaymentMethod.value == PaymentMethod.airtelMoney;
-
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -430,7 +420,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Inter(
-            text: isAirtel ? 'Airtel Money Details' : 'M-Pesa Details',
+            text: 'M-Pesa Details',
             fontSize: 18,
             fontWeight: FontWeight.w600,
             textAlignment: TextAlign.left,
@@ -469,10 +459,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 spaceW10,
                 Expanded(
                   child: Inter(
-                    text:
-                        isAirtel
-                            ? 'You will receive a payment prompt on your phone'
-                            : 'You will receive an M-Pesa STK push notification',
+                    text: 'You will receive an M-Pesa STK push notification',
                     fontSize: 12,
                     fontWeight: FontWeight.normal,
                     textColor: AppPallete.greyColor,
@@ -688,18 +675,36 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Validate payment details
     if (!_validatePaymentDetails()) return;
 
-    final paymentDetails = _createPaymentDetails();
-    final receipt = await cartController.processPayment(paymentDetails);
+    switch (cartController.selectedPaymentMethod.value) {
+      case PaymentMethod.mpesa:
+        await cartController.processPayment(
+          phoneNumber: phoneController.text.trim(),
+        );
+        break;
+      case PaymentMethod.card:
+        final expiryParts = expiryController.text.split('/');
+        if (expiryParts.length != 2) {
+          Get.snackbar(
+            'Error',
+            'Invalid expiry date format. Please use MM/YY format.',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
 
-    if (receipt != null) {
-      Get.toNamed('/payment-confirmation', arguments: receipt);
+        await cartController.processPayment(
+          cardNumber: cardNumberController.text.trim(),
+          cvv: cvvController.text.trim(),
+          expiryMonth: expiryParts[0].trim(),
+          expiryYear: '20${expiryParts[1].trim()}',
+        );
+        break;
     }
   }
 
   bool _validatePaymentDetails() {
     switch (cartController.selectedPaymentMethod.value) {
       case PaymentMethod.mpesa:
-      case PaymentMethod.airtelMoney:
         if (phoneController.text.trim().isEmpty) {
           Get.snackbar(
             'Error',
@@ -708,40 +713,45 @@ class _CheckoutPageState extends State<CheckoutPage> {
           );
           return false;
         }
-        break;
+        return true;
       case PaymentMethod.card:
-        if (cardHolderController.text.trim().isEmpty ||
-            cardNumberController.text.trim().isEmpty ||
-            expiryController.text.trim().isEmpty ||
-            cvvController.text.trim().isEmpty) {
+        if (cardNumberController.text.trim().isEmpty) {
           Get.snackbar(
             'Error',
-            'Please fill in all card details',
+            'Card number is required for card payments',
             snackPosition: SnackPosition.BOTTOM,
           );
           return false;
         }
-        break;
-    }
-    return true;
-  }
-
-  PaymentDetails _createPaymentDetails() {
-    switch (cartController.selectedPaymentMethod.value) {
-      case PaymentMethod.mpesa:
-      case PaymentMethod.airtelMoney:
-        return PaymentDetails(
-          method: cartController.selectedPaymentMethod.value,
-          phoneNumber: phoneController.text.trim(),
-        );
-      case PaymentMethod.card:
-        return PaymentDetails(
-          method: PaymentMethod.card,
-          cardNumber: cardNumberController.text.trim(),
-          cardHolderName: cardHolderController.text.trim(),
-          expiryDate: expiryController.text.trim(),
-          cvv: cvvController.text.trim(),
-        );
+        if (cvvController.text.trim().isEmpty) {
+          Get.snackbar(
+            'Error',
+            'CVV is required for card payments',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return false;
+        }
+        if (expiryController.text.trim().isEmpty) {
+          Get.snackbar(
+            'Error',
+            'Expiry date is required for card payments',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return false;
+        }
+        // Validate expiry date format
+        final expiryParts = expiryController.text.split('/');
+        if (expiryParts.length != 2 ||
+            expiryParts[0].length != 2 ||
+            expiryParts[1].length != 2) {
+          Get.snackbar(
+            'Error',
+            'Invalid expiry date format. Please use MM/YY format',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return false;
+        }
+        return true;
     }
   }
 }
