@@ -8,6 +8,7 @@ import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
 import 'package:kenic/features/profile/views/contact_info_page.dart';
+import 'package:kenic/features/profile/views/help_center_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -118,7 +119,7 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.questionMarkCircle,
                       title: 'Help Center',
                       subtitle: 'Get help and support',
-                      onTap: () {},
+                      onTap: () => Get.to(() => const HelpCenterPage()),
                     ),
                     _buildProfileItem(
                       icon: HeroIcons.chatBubbleLeftRight,
