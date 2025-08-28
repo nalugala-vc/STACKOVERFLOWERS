@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
@@ -9,6 +8,58 @@ import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 
 class CustomDialogs {
+  static void showTransferDomainDialog(
+    BuildContext context,
+    String domainName,
+  ) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Image.asset('assets/message_sent.png', height: 150),
+                spaceH20,
+                Inter(
+                  text: 'Transfer Domain',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  textColor: AppPallete.kenicBlack,
+                ),
+                spaceH10,
+                Inter(
+                  text:
+                      'The EPP Code for $domainName will be sent to your email within the next 24 hours.',
+                  fontSize: 16,
+                  textColor: AppPallete.greyColor,
+                  textAlignment: TextAlign.center,
+                ),
+                spaceH30,
+                SizedBox(
+                  width: double.infinity,
+                  child: RoundedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    label: 'OK',
+                    fontsize: 16,
+                    backgroundColor: AppPallete.kenicRed,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   static void showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -165,11 +216,15 @@ class CustomDialogs {
                           child: Obx(
                             () => RoundedButton(
                               onPressed: () async {
+                                if (authController.isLoading.value) return;
+                                authController.clearError();
                                 final result =
                                     await authController.deleteAccount();
                                 result.fold(
                                   (failure) {
-                                    // Error is shown through the error message observable
+                                    // Error will be shown through the error message observable
+                                    authController.errorMessage.value =
+                                        failure.message;
                                   },
                                   (success) {
                                     Navigator.of(context).pop();

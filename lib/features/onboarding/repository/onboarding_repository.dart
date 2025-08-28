@@ -205,6 +205,16 @@ class OnboardingRepository {
         body: body,
       );
 
+      debugPrint('response: ${response.body}');
+
+      if (response.body.isEmpty) {
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          return const Right('Account deleted successfully');
+        } else {
+          return Left(AppFailure('Failed to delete account'));
+        }
+      }
+
       final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
 
       if (response.statusCode != 200 && response.statusCode != 201) {

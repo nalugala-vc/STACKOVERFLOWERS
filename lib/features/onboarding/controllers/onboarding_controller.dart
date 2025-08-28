@@ -345,12 +345,15 @@ class OnboardingController extends BaseController {
 
     try {
       if (deleteAccountPassword.text.isEmpty) {
+        errorMessage.value = 'Password is required';
         return Left(AppFailure('Password is required'));
       }
 
       final result = await _repository.deleteUser(
         password: deleteAccountPassword.text,
       );
+
+      print('result: $result');
 
       if (result.isRight()) {
         // Clear all local data and reset state

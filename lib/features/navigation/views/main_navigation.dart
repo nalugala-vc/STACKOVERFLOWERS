@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/domain_core/views/home_dashboard.dart';
+import 'package:kenic/features/domain_core/views/my_domains_page.dart';
 import 'package:kenic/features/orders/views/orders_page.dart';
 import 'package:kenic/features/profile/views/profile_page.dart';
 
@@ -17,6 +18,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _pages = [
     const HomeDashboard(),
+    const MyDomainsPage(),
     const OrdersPage(),
     const ProfilePage(),
   ];
@@ -46,10 +48,15 @@ class _MainNavigationState extends State<MainNavigation> {
                 _buildNavItem(index: 0, icon: HeroIcons.home, label: 'Home'),
                 _buildNavItem(
                   index: 1,
+                  icon: HeroIcons.globeAlt,
+                  label: 'My Domains',
+                ),
+                _buildNavItem(
+                  index: 2,
                   icon: HeroIcons.clipboardDocumentList,
                   label: 'Orders',
                 ),
-                _buildNavItem(index: 2, icon: HeroIcons.user, label: 'Profile'),
+                _buildNavItem(index: 3, icon: HeroIcons.user, label: 'Profile'),
               ],
             ),
           ),

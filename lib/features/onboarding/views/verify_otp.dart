@@ -139,7 +139,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
         colorText: Colors.green[900],
       );
       // Redirect to signin page after successful verification
-      Get.offAllNamed('/home');
+      Get.offAllNamed('/main');
     } else {
       result.fold(
         (failure) => Get.snackbar(
