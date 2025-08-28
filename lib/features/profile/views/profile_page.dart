@@ -7,6 +7,7 @@ import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
+import 'package:kenic/features/profile/views/contact_info_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -122,7 +123,7 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.chatBubbleLeftRight,
                       title: 'Contact Us',
                       subtitle: 'Reach out to our support team',
-                      onTap: () {},
+                      onTap: () => Get.to(() => const ContactInfoPage()),
                     ),
                     _buildProfileItem(
                       icon: HeroIcons.documentText,
