@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
+import 'package:kenic/core/utils/theme/responsive_sizes.dart';
 import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
@@ -33,8 +34,8 @@ class _SigninState extends State<Signin> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    height: 100,
-                    width: 160,
+                    height: ResponsiveSizes.size100,
+                    width: ResponsiveSizes.size160,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/logo.png'),
@@ -43,11 +44,11 @@ class _SigninState extends State<Signin> {
                     ),
                   ),
                   spaceH40,
-                  Inter(text: 'Welcome Back', fontSize: 25),
+                  Inter(text: 'Welcome Back', fontSize: ResponsiveSizes.size25),
                   spaceH5,
                   Inter(
                     text: 'Sign in to your account',
-                    fontSize: 15,
+                    fontSize: ResponsiveSizes.size15,
                     fontWeight: FontWeight.normal,
                   ),
                   spaceH50,
@@ -56,7 +57,7 @@ class _SigninState extends State<Signin> {
                     children: [
                       Inter(
                         text: 'Email',
-                        fontSize: 16,
+                        fontSize: ResponsiveSizes.size16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -74,7 +75,7 @@ class _SigninState extends State<Signin> {
                     children: [
                       Inter(
                         text: 'Password',
-                        fontSize: 16,
+                        fontSize: ResponsiveSizes.size16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -94,7 +95,7 @@ class _SigninState extends State<Signin> {
                       onTap: () => Get.toNamed('/forgot-password'),
                       child: Inter(
                         text: 'Forgot Password?',
-                        fontSize: 14,
+                        fontSize: ResponsiveSizes.size14,
                         textColor: AppPallete.kenicRed,
                         fontWeight: FontWeight.w500,
                       ),
@@ -124,7 +125,7 @@ class _SigninState extends State<Signin> {
                       }
                     },
                     label: 'Sign In',
-                    fontsize: 18,
+                    fontsize: ResponsiveSizes.size18,
                   ),
                   spaceH50,
                   Row(
@@ -132,14 +133,14 @@ class _SigninState extends State<Signin> {
                     children: [
                       Inter(
                         text: "Don't have an account? ",
-                        fontSize: 14,
+                        fontSize: ResponsiveSizes.size14,
                         fontWeight: FontWeight.normal,
                       ),
                       GestureDetector(
                         onTap: () => Get.toNamed('/signup'),
                         child: Inter(
                           text: 'Sign Up',
-                          fontSize: 14,
+                          fontSize: ResponsiveSizes.size14,
                           textColor: AppPallete.kenicRed,
                           fontWeight: FontWeight.w600,
                         ),

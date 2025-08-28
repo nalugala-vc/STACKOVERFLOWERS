@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
+import 'package:kenic/core/utils/theme/responsive_sizes.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
@@ -41,8 +42,8 @@ class _VerifyOtpState extends State<VerifyOtp> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    height: 100,
-                    width: 160,
+                    height: ResponsiveSizes.size100,
+                    width: ResponsiveSizes.size160,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/logo.png'),
@@ -51,11 +52,11 @@ class _VerifyOtpState extends State<VerifyOtp> {
                     ),
                   ),
                   spaceH40,
-                  Inter(text: 'Verify OTP', fontSize: 25),
+                  Inter(text: 'Verify OTP', fontSize: ResponsiveSizes.size25),
                   spaceH5,
                   Inter(
                     text: 'Enter the 6-digit code sent to your phone',
-                    fontSize: 15,
+                    fontSize: ResponsiveSizes.size15,
                     fontWeight: FontWeight.normal,
                   ),
                   spaceH50,
@@ -86,7 +87,7 @@ class _VerifyOtpState extends State<VerifyOtp> {
                           controller.isLoading.value
                               ? 'Verifying...'
                               : 'Verify OTP',
-                      fontsize: 18,
+                      fontsize: ResponsiveSizes.size18,
                     ),
                   ),
                   spaceH30,
@@ -95,14 +96,14 @@ class _VerifyOtpState extends State<VerifyOtp> {
                     children: [
                       Inter(
                         text: "Didn't receive the code? ",
-                        fontSize: 14,
+                        fontSize: ResponsiveSizes.size14,
                         fontWeight: FontWeight.normal,
                       ),
                       GestureDetector(
                         onTap: _resendOTP,
                         child: Inter(
                           text: 'Resend',
-                          fontSize: 14,
+                          fontSize: ResponsiveSizes.size14,
                           textColor: AppPallete.kenicRed,
                           fontWeight: FontWeight.w600,
                         ),
