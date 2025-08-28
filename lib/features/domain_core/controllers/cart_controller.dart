@@ -522,7 +522,7 @@ class CartController extends BaseController {
         paymentReference: paymentReference,
       );
 
-      final success = await result.fold((failure) => false, (response) {
+      final success = result.fold((failure) => false, (response) {
         if (response.success &&
             response.data?.status.toLowerCase() == 'success') {
           _clearCartAndNavigateToConfirmation(response.data?.toJson());

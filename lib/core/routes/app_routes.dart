@@ -9,6 +9,9 @@ import 'package:kenic/features/domain_core/views/domain_details.dart';
 import 'package:kenic/features/domain_core/views/cart_checkout.dart';
 import 'package:kenic/features/domain_core/views/checkout_page.dart';
 import 'package:kenic/features/domain_core/views/payment_confirmation.dart';
+import 'package:kenic/features/navigation/views/main_navigation.dart';
+import 'package:kenic/features/orders/views/orders_page.dart';
+import 'package:kenic/features/profile/views/profile_page.dart';
 
 class AppRoutes {
   static final authMiddleware = AuthMiddleware();
@@ -33,8 +36,23 @@ class AppRoutes {
 
     // Protected routes (with middleware)
     GetPage(
+      name: '/main',
+      page: () => const MainNavigation(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
       name: '/home',
       page: () => const HomeDashboard(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: '/orders',
+      page: () => const OrdersPage(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: '/profile',
+      page: () => const ProfilePage(),
       middlewares: [authMiddleware],
     ),
     GetPage(

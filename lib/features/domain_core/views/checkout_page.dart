@@ -26,6 +26,28 @@ class _CheckoutPageState extends State<CheckoutPage> {
 
   static const double vatRate = 0.16; // 16% VAT
 
+  // Check if this is for an existing order
+  Map<String, dynamic>? orderData;
+  bool isExistingOrder = false;
+  int? existingOrderId;
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if we're paying for an existing order
+    final arguments = Get.arguments as Map<String, dynamic>?;
+    if (arguments != null) {
+      orderData = arguments['order'] as Map<String, dynamic>?;
+      isExistingOrder = arguments['isExistingOrder'] as bool? ?? false;
+      existingOrderId = arguments['orderId'] as int?;
+
+      if (isExistingOrder && existingOrderId != null) {
+        // Set the order ID in cart controller for payment
+        cartController.orderId.value = existingOrderId;
+      }
+    }
+  }
+
   @override
   void dispose() {
     phoneController.dispose();
@@ -89,7 +111,7 @@ class _CheckoutPageState extends State<CheckoutPage> {
         );
       }),
       bottomNavigationBar: Obx(() {
-        if (cartController.cart.value.isEmpty) {
+        if (!isExistingOrder && cartController.cart.value.isEmpty) {
           return const SizedBox.shrink();
         }
         return _buildCheckoutButton();
@@ -98,10 +120,22 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Widget _buildOrderSummary() {
-    final cart = cartController.cart.value;
-    double subtotal = cart.subtotal;
+    double subtotal;
+    double discount = 0.0;
+
+    if (isExistingOrder && orderData != null) {
+      // Use existing order data
+      subtotal =
+          double.tryParse(orderData!['total_amount']?.toString() ?? '0') ?? 0.0;
+    } else {
+      // Use cart data
+      final cart = cartController.cart.value;
+      subtotal = cart.subtotal;
+      discount = cart.discount;
+    }
+
     double vat = subtotal * vatRate;
-    double total = subtotal + vat - cart.discount;
+    double total = subtotal + vat - discount;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -137,10 +171,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
           ),
           spaceH20,
           _buildSummaryRow('Subtotal', 'KES ${subtotal.toStringAsFixed(0)}'),
-          if (cart.discount > 0)
+          if (discount > 0)
             _buildSummaryRow(
               'Discount',
-              '-KES ${cart.discount.toStringAsFixed(0)}',
+              '-KES ${discount.toStringAsFixed(0)}',
               isDiscount: true,
             ),
           _buildSummaryRow('VAT (16%)', 'KES ${vat.toStringAsFixed(0)}'),

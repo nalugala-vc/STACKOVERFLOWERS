@@ -491,7 +491,7 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
           children: [
             Expanded(
               child: RoundedButton(
-                onPressed: () => Get.offAllNamed('/home'),
+                onPressed: () => Get.offAllNamed('/main'),
                 label: 'Search More',
                 backgroundColor: AppPallete.kenicGrey,
                 textColor: AppPallete.kenicBlack,

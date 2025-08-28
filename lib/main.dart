@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
         showSemanticsDebugger: false,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightMode,
-        initialRoute: authController.isLoggedIn.value ? '/home' : '/signin',
+        initialRoute: authController.isLoggedIn.value ? '/main' : '/signin',
         getPages: AppRoutes.routes,
       ),
     );
