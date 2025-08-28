@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:kenic/core/controller/base_controller.dart';
 import 'package:kenic/features/domain_core/models/cart.dart';
 import 'package:kenic/features/domain_core/models/domain.dart';
 import 'package:kenic/features/domain_core/models/models.dart';
 import 'package:kenic/features/domain_core/models/order.dart';
-import 'package:kenic/features/domain_core/models/payment.dart';
+
 import 'package:kenic/features/domain_core/repository/cart_repository.dart';
 import 'package:kenic/features/domain_core/repository/order_repository.dart';
 import 'package:kenic/features/domain_core/utils/domain_converter.dart';
@@ -467,6 +468,82 @@ class CartController extends BaseController {
     // In real app, save to shared preferences or sync with backend
   }
 
+  void _clearCartAndNavigateToConfirmation(Map<String, dynamic>? paymentData) {
+    // Clear cart
+    cart.value = Cart.empty();
+    appliedPromoCode.value = '';
+    promoDiscount.value = 0.0;
+    promoCodeController.clear();
+    cartItemsWithIds.clear();
+    cartId.value = null;
+    orderId.value = null;
+
+    // Navigate to confirmation page
+    Get.offAllNamed('/payment-confirmation', arguments: paymentData);
+  }
+
+  Future<void> _launchPaymentUrl(String url, String paymentReference) async {
+    try {
+      final uri = Uri.parse(url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+
+        // After launching URL, start polling for payment status
+        _startPaymentStatusPolling(paymentReference);
+      } else {
+        Get.snackbar(
+          'Error',
+          'Could not launch payment page',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.shade100,
+          colorText: Colors.red.shade900,
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to launch payment page',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+    }
+  }
+
+  Future<void> _startPaymentStatusPolling(String paymentReference) async {
+    // Poll every 5 seconds for 2 minutes
+    const maxAttempts = 24; // 2 minutes = 24 * 5 seconds
+    int attempts = 0;
+
+    while (attempts < maxAttempts) {
+      await Future.delayed(const Duration(seconds: 5));
+
+      final result = await _orderRepository.queryPayment(
+        paymentReference: paymentReference,
+      );
+
+      final success = await result.fold((failure) => false, (response) {
+        if (response.success &&
+            response.data?.status.toLowerCase() == 'success') {
+          _clearCartAndNavigateToConfirmation(response.data?.toJson());
+          return true;
+        }
+        return false;
+      });
+
+      if (success) break;
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      Get.snackbar(
+        'Payment Status',
+        'Please check your email for payment confirmation',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   bool isInCart(String domainName) {
     return cart.value.containsDomain(domainName);
   }
@@ -582,20 +659,27 @@ class CartController extends BaseController {
         },
         (response) {
           if (response.success) {
-            // Clear cart after successful payment
-            cart.value = Cart.empty();
-            appliedPromoCode.value = '';
-            promoDiscount.value = 0.0;
-            promoCodeController.clear();
-            cartItemsWithIds.clear();
-            cartId.value = null;
-            orderId.value = null;
+            if (selectedPaymentMethod.value == PaymentMethod.card &&
+                response.data?.paymentUrl != null) {
+              // For card payments, launch the payment URL
+              final paymentUrl = response.data?.paymentUrl;
+              final paymentRef = response.data?.paymentReference;
 
-            // Pass payment data to confirmation page
-            Get.offAllNamed(
-              '/payment-confirmation',
-              arguments: response.data?.toJson(),
-            );
+              if (paymentUrl != null && paymentRef != null) {
+                _launchPaymentUrl(paymentUrl, paymentRef);
+              } else {
+                Get.snackbar(
+                  'Error',
+                  'Payment URL not available',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red.shade100,
+                  colorText: Colors.red.shade900,
+                );
+              }
+            } else {
+              // For other payment methods, proceed to confirmation
+              _clearCartAndNavigateToConfirmation(response.data?.toJson());
+            }
           } else {
             Get.snackbar(
               'Payment Failed',

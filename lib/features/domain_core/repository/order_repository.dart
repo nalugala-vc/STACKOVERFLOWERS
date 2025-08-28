@@ -75,7 +75,15 @@ class OrderRepository {
       debugPrint('Payment response body: $responseBody');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return Right(PaymentResponse.fromJson(responseBody));
+        final paymentResponse = PaymentResponse.fromJson(responseBody);
+
+        // For card payments, if we have a payment URL, return it
+        if (paymentMethod == PaymentMethod.card &&
+            paymentResponse.data?.paymentUrl != null) {
+          return Right(paymentResponse);
+        }
+
+        return Right(paymentResponse);
       }
 
       final message =
@@ -86,6 +94,42 @@ class OrderRepository {
     } catch (e) {
       debugPrint('Error paying order: $e');
       return Left(AppFailure('Error paying order: $e'));
+    }
+  }
+
+  Future<Either<AppFailure, PaymentResponse>> queryPayment({
+    required String paymentReference,
+  }) async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final url =
+          '${AppConfigs.appBaseUrl}${Endpoints.payments}/query?payment_reference=$paymentReference';
+
+      debugPrint('Querying payment - Making GET request to: $url');
+      debugPrint('Querying payment - Headers: $headers');
+
+      final response = await http.get(Uri.parse(url), headers: headers);
+
+      debugPrint(
+        'Querying payment - Response status code: ${response.statusCode}',
+      );
+      debugPrint('Querying payment - Response body: ${response.body}');
+
+      final responseBody = jsonDecode(response.body) as Map<String, dynamic>;
+      debugPrint('Payment query response body: $responseBody');
+
+      if (response.statusCode == 200) {
+        return Right(PaymentResponse.fromJson(responseBody));
+      }
+
+      final message =
+          responseBody['message'] as String? ??
+          'Failed to query payment status. Please try again.';
+
+      return Left(AppFailure(message));
+    } catch (e) {
+      debugPrint('Error querying payment: $e');
+      return Left(AppFailure('Error querying payment: $e'));
     }
   }
 }
