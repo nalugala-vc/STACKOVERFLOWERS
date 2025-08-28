@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
@@ -8,6 +9,99 @@ import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 
 class CustomDialogs {
+  static void showEppCodeDialog(BuildContext context, String eppCode) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Inter(
+                  text: 'EPP Code',
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  textColor: AppPallete.kenicBlack,
+                ),
+                Inter(
+                  text: 'Use the EPP code to transfer your domain',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  textColor: AppPallete.greyColor,
+                ),
+                spaceH20,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppPallete.scaffoldBg,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Inter(
+                              text: eppCode,
+                              fontSize: 18,
+                              textColor: AppPallete.kenicBlack,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: eppCode));
+                              Get.snackbar(
+                                'Success',
+                                'EPP Code copied to clipboard',
+                                backgroundColor: Colors.green,
+                                colorText: Colors.white,
+                                snackPosition: SnackPosition.BOTTOM,
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.copy,
+                              color: AppPallete.kenicRed,
+                              size: 20,
+                            ),
+                            label: Inter(
+                              text: 'Copy',
+                              fontSize: 14,
+                              textColor: AppPallete.kenicRed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                spaceH20,
+                SizedBox(
+                  width: double.infinity,
+                  child: RoundedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    label: 'Close',
+                    fontsize: 16,
+                    backgroundColor: AppPallete.kenicRed,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   static void showTransferDomainDialog(
     BuildContext context,
     String domainName,
