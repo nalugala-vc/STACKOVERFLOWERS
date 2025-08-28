@@ -4,12 +4,16 @@ import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final authController = Get.find<OnboardingController>();
+    final user = authController.user;
+
     return Scaffold(
       backgroundColor: AppPallete.kenicWhite,
       body: CustomScrollView(
@@ -50,21 +54,31 @@ class ProfilePage extends StatelessWidget {
                           ),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
-                          Icons.person,
-                          size: 40,
-                          color: AppPallete.kenicWhite,
+                        child: Center(
+                          child:
+                              user?.name.isNotEmpty == true
+                                  ? Inter(
+                                    text: user!.name[0].toUpperCase(),
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    textColor: AppPallete.kenicWhite,
+                                  )
+                                  : const Icon(
+                                    Icons.person,
+                                    size: 40,
+                                    color: AppPallete.kenicWhite,
+                                  ),
                         ),
                       ),
                       spaceH15,
                       Inter(
-                        text: 'John Doe',
+                        text: user?.name ?? 'Guest User',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         textColor: AppPallete.kenicBlack,
                       ),
                       Inter(
-                        text: 'john.doe@example.com',
+                        text: user?.email ?? 'No email provided',
                         fontSize: 14,
                         fontWeight: FontWeight.normal,
                         textColor: AppPallete.greyColor,
@@ -91,12 +105,6 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.key,
                       title: 'Change Password',
                       subtitle: 'Update your password',
-                      onTap: () {},
-                    ),
-                    _buildProfileItem(
-                      icon: HeroIcons.bell,
-                      title: 'Notifications',
-                      subtitle: 'Manage notification preferences',
                       onTap: () {},
                     ),
                   ]),
@@ -211,12 +219,14 @@ class ProfilePage extends StatelessWidget {
       ),
       title: Inter(
         text: title,
+        textAlignment: TextAlign.left,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         textColor: isDestructive ? Colors.red : AppPallete.kenicBlack,
       ),
       subtitle: Inter(
         text: subtitle,
+        textAlignment: TextAlign.left,
         fontSize: 14,
         fontWeight: FontWeight.normal,
         textColor: AppPallete.greyColor,
