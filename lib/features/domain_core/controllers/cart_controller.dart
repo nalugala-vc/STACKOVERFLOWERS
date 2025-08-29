@@ -127,11 +127,12 @@ class CartController extends BaseController {
 
         if (domainName.isNotEmpty && price > 0) {
           // Create a Domain object from API data
+          final domainParts = domainName.split('.');
           final domain = Domain(
-            name: domainName.split('.').first, // Extract SLD
+            name: domainParts.first, // Extract SLD
             extension:
-                domainName.contains('.')
-                    ? '.${domainName.split('.').last}'
+                domainParts.length > 1
+                    ? '.${domainParts.sublist(1).join('.')}'
                     : '',
             isAvailable: true,
             price: price,
@@ -244,12 +245,11 @@ class CartController extends BaseController {
               // Fetch cart to get the updated cart ID
               await fetchCartFromAPI();
 
-              // Convert DomainInfo to Domain and add to local cart
-              final domain = DomainConverter.domainInfoToDomain(domainInfo);
-              addToCart(domain, registrationYears: registrationYears);
-
-              // Force refresh the cart to update UI
-              cart.refresh();
+              // Note: fetchCartFromAPI already updates the local cart from the API response,
+              // so we don't need to manually add the domain again
+              debugPrint(
+                'Domain ${domainInfo.domainName} successfully added via API and cart updated',
+              );
 
               // Show success message and navigation options
               Get.snackbar(
@@ -591,12 +591,25 @@ class CartController extends BaseController {
     // Normalize the domain name to ensure consistent comparison
     final normalizedDomainName = domainName.toLowerCase().trim();
 
+    // Debug: Log what we're checking
+    debugPrint('🔍 Checking if "$normalizedDomainName" is in cart...');
+    debugPrint('📦 Cart contains ${cart.value.items.length} items:');
+    for (final item in cart.value.items) {
+      final cartDomainName = item.domain.fullDomainName.toLowerCase().trim();
+      debugPrint('   - "$cartDomainName"');
+    }
+
     // Check using normalized domain names
-    return cart.value.items.any(
+    final result = cart.value.items.any(
       (item) =>
           item.domain.fullDomainName.toLowerCase().trim() ==
           normalizedDomainName,
     );
+
+    debugPrint(
+      '✅ Result: "$normalizedDomainName" ${result ? "IS" : "IS NOT"} in cart',
+    );
+    return result;
   }
 
   CartItem? getCartItem(String domainName) {

@@ -254,14 +254,10 @@ class _DomainSearchResultsState extends State<DomainSearchResults> {
                             isInCart || isLoading
                                 ? null
                                 : () async {
-                                  final success = await cartController
-                                      .addDomainInfoToCart(
-                                        domain,
-                                        registrationYears: selectedYears,
-                                      );
-                                  if (success) {
-                                    cartController.cart.refresh();
-                                  }
+                                  await cartController.addDomainInfoToCart(
+                                    domain,
+                                    registrationYears: selectedYears,
+                                  );
                                 },
                         style: ElevatedButton.styleFrom(
                           backgroundColor:
@@ -487,14 +483,10 @@ class _DomainSearchResultsState extends State<DomainSearchResults> {
                         isInCart || isLoading
                             ? null
                             : () async {
-                              final success = await cartController
-                                  .addDomainInfoToCart(
-                                    suggestion,
-                                    registrationYears: selectedYears,
-                                  );
-                              if (success) {
-                                cartController.cart.refresh();
-                              }
+                              await cartController.addDomainInfoToCart(
+                                suggestion,
+                                registrationYears: selectedYears,
+                              );
                             },
                     style: TextButton.styleFrom(
                       backgroundColor:
