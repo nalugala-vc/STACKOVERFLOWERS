@@ -307,39 +307,145 @@ class _HomeDashboardState extends State<HomeDashboard>
               ),
             ],
           ),
-          child: TextField(
-            controller: searchController.searchController,
-            decoration: InputDecoration(
-              hintText: 'Search for your perfect domain...',
-              hintStyle: TextStyle(
-                color: AppPallete.greyColor.withOpacity(0.7),
-                fontSize: ResponsiveSizes.size16,
-                fontWeight: FontWeight.w400,
-              ),
-              prefixIcon: Container(
-                margin: const EdgeInsets.all(12),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppPallete.kenicRed,
-                      AppPallete.kenicRed.withOpacity(0.8),
-                    ],
+          child: Row(
+            children: [
+              // Search input field
+              Expanded(
+                child: TextField(
+                  controller: searchController.searchController,
+                  decoration: InputDecoration(
+                    filled: false,
+                    errorBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    disabledBorder: InputBorder.none,
+                    hintText: 'Search for your perfect domain...',
+                    hintStyle: TextStyle(
+                      color: AppPallete.greyColor.withOpacity(0.7),
+                      fontSize: ResponsiveSizes.size16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    prefixIcon: Container(
+                      margin: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppPallete.kenicRed,
+                            AppPallete.kenicRed.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: HeroIcon(
+                        HeroIcons.magnifyingGlass,
+                        size: ResponsiveSizes.size20,
+                        color: AppPallete.kenicWhite,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 18,
+                    ),
                   ),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: HeroIcon(
-                  HeroIcons.magnifyingGlass,
-                  size: ResponsiveSizes.size20,
-                  color: AppPallete.kenicWhite,
+                  onSubmitted: (value) async {
+                    if (value.trim().isNotEmpty) {
+                      final fullDomain = searchController.getFullDomainName(
+                        value.trim(),
+                      );
+                      await searchController.searchDomains(fullDomain);
+                      if (mounted) {
+                        Get.toNamed('/search-results');
+                      }
+                    }
+                  },
                 ),
               ),
-              suffixIcon: Obx(
+
+              // Domain extension dropdown
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                child: Obx(
+                  () => PopupMenuButton<String>(
+                    onSelected: (String extension) {
+                      searchController.selectDomainExtension(extension);
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return searchController.domainExtensions.map((
+                        extensionData,
+                      ) {
+                        return PopupMenuItem<String>(
+                          value: extensionData.extension,
+                          child: SizedBox(
+                            width: 280,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Inter(
+                                  text: extensionData.extension,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  textColor: AppPallete.kenicRed,
+                                ),
+                                spaceH5,
+                                Inter(
+                                  text: extensionData.description,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w400,
+                                  textColor: AppPallete.greyColor,
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }).toList();
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: AppPallete.kenicRed.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Inter(
+                            text:
+                                searchController.selectedDomainExtension.value,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            textColor: AppPallete.kenicRed,
+                          ),
+                          spaceW5,
+                          const HeroIcon(
+                            HeroIcons.chevronDown,
+                            size: 16,
+                            color: AppPallete.kenicRed,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Search button
+              Obx(
                 () => GestureDetector(
                   onTap: () async {
                     final query = searchController.searchController.text.trim();
                     if (query.isNotEmpty) {
-                      await searchController.searchDomains(query);
+                      final fullDomain = searchController.getFullDomainName(
+                        query,
+                      );
+                      await searchController.searchDomains(fullDomain);
                       if (mounted) {
                         Get.toNamed('/search-results');
                       }
@@ -370,24 +476,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                   ),
                 ),
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(25),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 18,
-              ),
-            ),
-
-            onSubmitted: (value) async {
-              if (value.trim().isNotEmpty) {
-                await searchController.searchDomains(value.trim());
-                if (mounted) {
-                  Get.toNamed('/search-results');
-                }
-              }
-            },
+            ],
           ),
         ),
 

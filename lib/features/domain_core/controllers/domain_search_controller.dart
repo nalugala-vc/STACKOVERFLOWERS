@@ -33,6 +33,21 @@ class DomainSearchController extends GetxController {
     '.go.ke',
   ];
 
+  // Selected domain extension for dropdown
+  final selectedDomainExtension = '.co.ke'.obs;
+  final domainExtensions = [
+    DomainExtension('.ke', 'For any Kenyan entity, general use'),
+    DomainExtension('.co.ke', 'Companies, businesses, and commercial entities'),
+    DomainExtension('.or.ke', 'Non-profit organizations, NGOs, CBOs'),
+    DomainExtension('.ac.ke', 'Accredited higher learning institutions'),
+    DomainExtension('.sc.ke', 'Primary and secondary schools'),
+    DomainExtension('.go.ke', 'Government institutions only'),
+    DomainExtension('.ne.ke', 'Network providers, ISPs'),
+    DomainExtension('.me.ke', 'Personal domains for individuals'),
+    DomainExtension('.mobi.ke', 'Mobile content/services'),
+    DomainExtension('.info.ke', 'Information services/resources'),
+  ];
+
   // Trending and recent
   final trendingKeywords =
       <String>[
@@ -81,6 +96,20 @@ class DomainSearchController extends GetxController {
   void loadRecentSearches() {
     // In real app, load from shared preferences or API
     recentSearches.value = [];
+  }
+
+  // Extension dropdown methods
+  void selectDomainExtension(String extension) {
+    selectedDomainExtension.value = extension;
+  }
+
+  String getFullDomainName(String domainName) {
+    // If domain already has extension, return as is
+    if (domainName.contains('.')) {
+      return domainName;
+    }
+    // Otherwise append selected extension
+    return '$domainName${selectedDomainExtension.value}';
   }
 
   // ==================== DOMAIN SEARCH ====================

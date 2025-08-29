@@ -14,6 +14,10 @@ import 'package:kenic/features/orders/views/orders_page.dart';
 import 'package:kenic/features/profile/views/profile_page.dart';
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/features/onboarding/views/change_password.dart';
+import 'package:kenic/features/onboarding/views/verify_otp.dart';
+import 'package:kenic/features/onboarding/views/verify_phone.dart';
+import 'package:kenic/features/onboarding/views/verify_email.dart';
+import 'package:kenic/features/onboarding/views/reset_password.dart';
 
 class AppRoutes {
   static final authMiddleware = AuthMiddleware();
@@ -85,6 +89,26 @@ class AppRoutes {
     GetPage(
       name: OnboardingRoutes.changePassword,
       page: () => const ChangePasswordPage(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: OnboardingRoutes.verifyOtp,
+      page: () => const VerifyOtp(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: OnboardingRoutes.verifyPhone,
+      page: () => const VerifyPhone(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: OnboardingRoutes.verifyEmail,
+      page: () => const VerifyEmail(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: OnboardingRoutes.resetPassword,
+      page: () => const ResetPassword(),
       middlewares: [authMiddleware],
     ),
   ];
