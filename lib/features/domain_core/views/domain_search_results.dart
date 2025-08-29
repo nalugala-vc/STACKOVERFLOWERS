@@ -7,8 +7,15 @@ import 'package:kenic/features/domain_core/controllers/domain_search_controller.
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
 import 'package:kenic/features/domain_core/models/models.dart';
 
-class DomainSearchResults extends StatelessWidget {
+class DomainSearchResults extends StatefulWidget {
   const DomainSearchResults({super.key});
+
+  @override
+  State<DomainSearchResults> createState() => _DomainSearchResultsState();
+}
+
+class _DomainSearchResultsState extends State<DomainSearchResults> {
+  int selectedYears = 1;
 
   @override
   Widget build(BuildContext context) {
@@ -141,7 +148,9 @@ class DomainSearchResults extends StatelessWidget {
 
   Widget _buildMainDomainCard(DomainInfo domain) {
     return Container(
-      width: double.infinity,
+      key: null,
+      alignment: Alignment.center,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppPallete.kenicWhite,
@@ -161,6 +170,8 @@ class DomainSearchResults extends StatelessWidget {
           Row(
             children: [
               Container(
+                key: null,
+                alignment: Alignment.center,
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color:
@@ -220,8 +231,8 @@ class DomainSearchResults extends StatelessWidget {
           spaceH20,
 
           // Pricing info
-          if (domain.kePricing != null) ...[
-            _buildPricingInfo(domain.kePricing!),
+          if (domain.pricing != null) ...[
+            _buildPricingInfo(domain.pricing),
             spaceH20,
           ],
 
@@ -244,7 +255,10 @@ class DomainSearchResults extends StatelessWidget {
                                 ? null
                                 : () async {
                                   final success = await cartController
-                                      .addDomainInfoToCart(domain);
+                                      .addDomainInfoToCart(
+                                        domain,
+                                        registrationYears: selectedYears,
+                                      );
                                   if (success) {
                                     cartController.cart.refresh();
                                   }
@@ -382,7 +396,9 @@ class DomainSearchResults extends StatelessWidget {
 
   Widget _buildSuggestionCard(DomainInfo suggestion) {
     return Container(
-      width: double.infinity,
+      key: null,
+      alignment: Alignment.center,
+      constraints: const BoxConstraints(maxWidth: double.infinity),
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -401,6 +417,8 @@ class DomainSearchResults extends StatelessWidget {
           Row(
             children: [
               Container(
+                key: null,
+                alignment: Alignment.center,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color:
@@ -470,7 +488,10 @@ class DomainSearchResults extends StatelessWidget {
                             ? null
                             : () async {
                               final success = await cartController
-                                  .addDomainInfoToCart(suggestion);
+                                  .addDomainInfoToCart(
+                                    suggestion,
+                                    registrationYears: selectedYears,
+                                  );
                               if (success) {
                                 cartController.cart.refresh();
                               }
@@ -531,7 +552,7 @@ class DomainSearchResults extends StatelessWidget {
               ],
             ],
           ),
-          if (suggestion.kePricing != null) ...[
+          if (suggestion.pricing != null) ...[
             spaceH15,
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -543,7 +564,8 @@ class DomainSearchResults extends StatelessWidget {
                   textColor: AppPallete.greyColor,
                 ),
                 Inter(
-                  text: suggestion.kePricing!.registrationPrice,
+                  text:
+                      'KES ${(suggestion.pricing?['1']?.register.firstOrNull?.price ?? 0).toStringAsFixed(2)}',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   textColor: AppPallete.kenicRed,
@@ -556,8 +578,18 @@ class DomainSearchResults extends StatelessWidget {
     );
   }
 
-  Widget _buildPricingInfo(KePricing pricing) {
+  Widget _buildPricingInfo(Map<String, PeriodPricing> pricing) {
+    // Get registration price for selected year
+    final yearPricing = pricing[selectedYears.toString()];
+    final renewalPrice = yearPricing?.renew.firstOrNull?.price ?? 0;
+    final transferPrice = yearPricing?.transfer.firstOrNull?.price ?? 0;
+
+    // Get price for selected number of years
+    final selectedYearPrice = yearPricing?.register.firstOrNull?.price ?? 0;
+
     return Container(
+      key: null,
+      alignment: Alignment.center,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppPallete.kenicGrey.withOpacity(0.05),
@@ -569,6 +601,8 @@ class DomainSearchResults extends StatelessWidget {
           Row(
             children: [
               Container(
+                key: null,
+                alignment: Alignment.center,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: AppPallete.kenicRed.withOpacity(0.1),
@@ -581,20 +615,81 @@ class DomainSearchResults extends StatelessWidget {
                 ),
               ),
               spaceW12,
-              Inter(
-                text: 'Pricing Details',
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                textColor: AppPallete.kenicBlack,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Inter(
+                    text: 'Pricing Details',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    textColor: AppPallete.kenicBlack,
+                  ),
+                  spaceH5,
+                  Inter(
+                    text: 'KES ${selectedYearPrice.toStringAsFixed(2)}',
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    textColor: AppPallete.kenicRed,
+                  ),
+                ],
               ),
             ],
           ),
           spaceH15,
-          _buildPriceRow('Registration', pricing.registrationPrice),
+          // Year selector
+          Row(
+            children: [
+              Inter(
+                text: 'Registration Period:',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                textColor: AppPallete.greyColor,
+              ),
+              spaceW12,
+              Container(
+                key: null,
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppPallete.kenicGrey),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButton<int>(
+                  value: selectedYears,
+                  underline: const SizedBox(),
+                  items:
+                      List.generate(10, (index) => index + 1)
+                          .map(
+                            (year) => DropdownMenuItem(
+                              value: year,
+                              child: Text(
+                                '$year ${year == 1 ? 'year' : 'years'}',
+                              ),
+                            ),
+                          )
+                          .toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        selectedYears = value;
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+          spaceH20,
+          // Pricing details
+          _buildPriceRow(
+            'Renewal Price',
+            'KES ${renewalPrice.toStringAsFixed(2)}',
+          ),
           spaceH12,
-          _buildPriceRow('Renewal', pricing.renewalPrice),
-          spaceH12,
-          _buildPriceRow('Transfer', pricing.transferPrice),
+          _buildPriceRow(
+            'Transfer Price',
+            'KES ${transferPrice.toStringAsFixed(2)}',
+          ),
           spaceH15,
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -606,14 +701,13 @@ class DomainSearchResults extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
-                  Icons.calendar_today_outlined,
+                  Icons.info_outline,
                   size: 14,
                   color: AppPallete.greyColor,
                 ),
                 spaceW8,
                 Inter(
-                  text:
-                      'Available for ${pricing.availableYears.join(', ')} years',
+                  text: 'Prices shown include all applicable fees',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   textColor: AppPallete.greyColor,
@@ -626,21 +720,39 @@ class DomainSearchResults extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceRow(String label, String price) {
+  Widget _buildPriceRow(
+    String label,
+    String price, {
+    bool isHighlighted = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Inter(
           text: label,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          textColor: AppPallete.greyColor,
+          fontSize: isHighlighted ? 16 : 14,
+          fontWeight: isHighlighted ? FontWeight.w600 : FontWeight.w500,
+          textColor:
+              isHighlighted ? AppPallete.kenicBlack : AppPallete.greyColor,
         ),
-        Inter(
-          text: price,
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-          textColor: AppPallete.kenicRed,
+        Container(
+          padding:
+              isHighlighted
+                  ? const EdgeInsets.symmetric(horizontal: 12, vertical: 4)
+                  : null,
+          decoration:
+              isHighlighted
+                  ? BoxDecoration(
+                    color: AppPallete.kenicRed.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  )
+                  : null,
+          child: Inter(
+            text: price,
+            fontSize: isHighlighted ? 18 : 16,
+            fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+            textColor: AppPallete.kenicRed,
+          ),
         ),
       ],
     );

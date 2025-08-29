@@ -36,42 +36,44 @@ class _SignupState extends State<Signup> {
   }
 
   // Method to handle signup process
-  Future<void> _handleSignup() async {
+  void _handleSignup() {
     if (_formKey.currentState!.validate()) {
-      final result = await controller.createUser(
-        name: controller.name.text.trim(),
-        email: controller.email.text.trim(),
-        phoneNumber: getFullPhoneNumber(),
-        password: controller.password.text,
-      );
+      controller
+          .createUser(
+            name: controller.name.text.trim(),
+            email: controller.email.text.trim(),
+            phoneNumber: getFullPhoneNumber(),
+            password: controller.password.text,
+          )
+          .then((result) async {
+            if (result.isRight()) {
+              // After successful registration, send verification code
+              final verificationResult = await controller.sendVerification();
 
-      if (result.isRight()) {
-        // After successful registration, send verification code
-        final verificationResult = await controller.sendVerification();
-
-        if (verificationResult.isRight()) {
-          // Redirect to OTP verification page
-          Get.offAllNamed('/verify-otp');
-        } else {
-          verificationResult.fold(
-            (failure) => Get.snackbar(
-              'Verification Error',
-              failure.message,
-              snackPosition: SnackPosition.BOTTOM,
-            ),
-            (message) => null,
-          );
-        }
-      } else {
-        result.fold(
-          (failure) => Get.snackbar(
-            'Error',
-            failure.message,
-            snackPosition: SnackPosition.BOTTOM,
-          ),
-          (user) => null,
-        );
-      }
+              if (verificationResult.isRight()) {
+                // Redirect to OTP verification page
+                Get.offAllNamed('/verify-otp');
+              } else {
+                verificationResult.fold(
+                  (failure) => Get.snackbar(
+                    'Verification Error',
+                    failure.message,
+                    snackPosition: SnackPosition.BOTTOM,
+                  ),
+                  (message) => null,
+                );
+              }
+            } else {
+              result.fold(
+                (failure) => Get.snackbar(
+                  'Error',
+                  failure.message,
+                  snackPosition: SnackPosition.BOTTOM,
+                ),
+                (user) => null,
+              );
+            }
+          });
     }
   }
 
@@ -90,8 +92,8 @@ class _SignupState extends State<Signup> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    height: ResponsiveSizes.size100,
-                    width: ResponsiveSizes.size160,
+                    height: 100,
+                    width: 160,
                     decoration: const BoxDecoration(
                       image: DecorationImage(
                         image: AssetImage('assets/logo.png'),
@@ -100,14 +102,11 @@ class _SignupState extends State<Signup> {
                     ),
                   ),
                   spaceH40,
-                  Inter(
-                    text: 'Create Account',
-                    fontSize: ResponsiveSizes.size25,
-                  ),
+                  Inter(text: 'Create Account', fontSize: 25),
                   spaceH5,
                   Inter(
                     text: 'Fill in your details to get started',
-                    fontSize: ResponsiveSizes.size15,
+                    fontSize: 15,
                     fontWeight: FontWeight.normal,
                   ),
                   spaceH50,
@@ -116,7 +115,7 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: 'Full Name',
-                        fontSize: ResponsiveSizes.size16,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -134,7 +133,7 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: 'Email',
-                        fontSize: ResponsiveSizes.size16,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -152,7 +151,7 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: 'Phone Number',
-                        fontSize: ResponsiveSizes.size16,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -223,7 +222,7 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: 'Password',
-                        fontSize: ResponsiveSizes.size16,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -242,7 +241,7 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: 'Confirm Password',
-                        fontSize: ResponsiveSizes.size16,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
@@ -261,13 +260,10 @@ class _SignupState extends State<Signup> {
                   spaceH40,
                   Obx(
                     () => RoundedButton(
-                      onPressed:
-                          controller.isLoading.value ? () {} : _handleSignup,
-                      label:
-                          controller.isLoading.value
-                              ? 'Processing...'
-                              : 'Sign Up',
-                      fontsize: ResponsiveSizes.size18,
+                      onPressed: _handleSignup,
+                      label: 'Sign Up',
+                      fontsize: 18,
+                      isLoading: controller.isLoading.value,
                     ),
                   ),
 
@@ -278,14 +274,14 @@ class _SignupState extends State<Signup> {
                     children: [
                       Inter(
                         text: "Already have an account? ",
-                        fontSize: ResponsiveSizes.size14,
+                        fontSize: 14,
                         fontWeight: FontWeight.normal,
                       ),
                       GestureDetector(
                         onTap: () => Get.toNamed('/signin'),
                         child: Inter(
                           text: 'Sign In',
-                          fontSize: ResponsiveSizes.size14,
+                          fontSize: 14,
                           textColor: AppPallete.kenicRed,
                           fontWeight: FontWeight.w600,
                         ),

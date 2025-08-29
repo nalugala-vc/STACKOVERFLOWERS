@@ -44,4 +44,45 @@ class ResponsiveSizes {
   static double get size15 => (_screenWidth * (15 / 390)).clamp(13.0, 17.0);
 
   static double get size25 => (_screenWidth * (25 / 390)).clamp(22.0, 28.0);
+  static double get size22 => (_screenWidth * (22 / 390)).clamp(19.0, 25.0);
+  static double get size36 => (_screenWidth * (36 / 390)).clamp(32.0, 40.0);
+  static double get size80 => (_screenWidth * (80 / 390)).clamp(70.0, 90.0);
+
+  // Additional sizes for padding, margins, and icons
+  static double get size5 => _scale(5, min: 4, max: 6);
+  static double get size6 => _scale(6, min: 5, max: 7);
+  static double get size8 => _scale(8, min: 6, max: 10);
+  static double get size10 => _scale(10, min: 8, max: 12);
+  static double get size12 => _scale(12, min: 10, max: 14);
+  static double get size30 => _scale(30, min: 26, max: 34);
+  static double get size40 => _scale(40, min: 35, max: 45);
+  static double get size60 => _scale(60, min: 50, max: 70);
+  static double get size65 => _scale(65, min: 55, max: 75);
+
+  // Hero section height calculation
+  static double getHeroHeight(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // Calculate aspect ratio
+    double aspectRatio = screenWidth / screenHeight;
+
+    // Base height percentage
+    double heightPercentage = 0.60;
+
+    // Adjust percentage based on aspect ratio
+    if (aspectRatio < 0.5) {
+      // Very tall devices
+      heightPercentage = 0.50;
+    } else if (aspectRatio > 0.65) {
+      // Wider devices
+      heightPercentage = 0.65;
+    }
+
+    // Calculate height
+    double calculatedHeight = screenHeight * heightPercentage;
+
+    // Ensure minimum and maximum heights
+    return calculatedHeight.clamp(500.0, 700.0);
+  }
 }

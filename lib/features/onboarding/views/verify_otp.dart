@@ -83,11 +83,9 @@ class _VerifyOtpState extends State<VerifyOtp> {
                     () => RoundedButton(
                       onPressed:
                           controller.isLoading.value ? () {} : _verifyOTP,
-                      label:
-                          controller.isLoading.value
-                              ? 'Verifying...'
-                              : 'Verify OTP',
+                      label: 'Verify OTP',
                       fontsize: ResponsiveSizes.size18,
+                      isLoading: controller.isLoading.value,
                     ),
                   ),
                   spaceH30,

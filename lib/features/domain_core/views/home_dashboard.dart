@@ -4,6 +4,7 @@ import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/core/utils/theme/responsive_sizes.dart';
 import 'package:kenic/features/domain_core/controllers/domain_search_controller.dart';
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
 
@@ -16,14 +17,16 @@ class HomeDashboard extends StatefulWidget {
 
 class _HomeDashboardState extends State<HomeDashboard>
     with TickerProviderStateMixin {
-  final searchController = Get.put(DomainSearchController());
-  final cartController = Get.put(CartController());
+  late DomainSearchController searchController;
+  late CartController cartController;
   late AnimationController _fadeController;
   late AnimationController _slideController;
 
   @override
   void initState() {
     super.initState();
+    searchController = Get.put(DomainSearchController());
+    cartController = Get.put(CartController());
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -40,6 +43,8 @@ class _HomeDashboardState extends State<HomeDashboard>
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
+    Get.delete<DomainSearchController>();
+    Get.delete<CartController>();
     super.dispose();
   }
 
@@ -51,7 +56,7 @@ class _HomeDashboardState extends State<HomeDashboard>
         slivers: [
           // Modern App Bar with Hero Section
           SliverAppBar(
-            expandedHeight: MediaQuery.of(context).size.height * 0.60,
+            expandedHeight: ResponsiveSizes.getHeroHeight(context),
             floating: false,
             pinned: true,
             backgroundColor: AppPallete.kenicWhite,
@@ -77,7 +82,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: EdgeInsets.all(ResponsiveSizes.size24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -104,8 +109,8 @@ class _HomeDashboardState extends State<HomeDashboard>
       child: Row(
         children: [
           Container(
-            height: 40,
-            width: 65,
+            height: ResponsiveSizes.size40,
+            width: ResponsiveSizes.size65,
             decoration: const BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/logo.png'),
@@ -121,7 +126,7 @@ class _HomeDashboardState extends State<HomeDashboard>
   Widget _buildCartIcon() {
     return Obx(
       () => Container(
-        margin: const EdgeInsets.only(right: 16),
+        margin: EdgeInsets.only(right: ResponsiveSizes.size16),
         child: Stack(
           children: [
             IconButton(
@@ -189,7 +194,7 @@ class _HomeDashboardState extends State<HomeDashboard>
           // World Map Background
           Positioned.fill(
             child: Container(
-              margin: const EdgeInsets.only(top: 80),
+              margin: EdgeInsets.only(top: ResponsiveSizes.size80),
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/wrld.png'),
@@ -233,7 +238,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                   ),
                 ),
                 child: Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(ResponsiveSizes.size24),
                   child: Column(
                     children: [
                       // Main Title
@@ -243,14 +248,14 @@ class _HomeDashboardState extends State<HomeDashboard>
                           children: [
                             Inter(
                               text: 'Find Your Perfect',
-                              fontSize: 32,
+                              fontSize: ResponsiveSizes.size32,
                               fontWeight: FontWeight.w300,
                               textAlignment: TextAlign.center,
                               textColor: AppPallete.kenicBlack,
                             ),
                             Inter(
                               text: 'Domain Name',
-                              fontSize: 36,
+                              fontSize: ResponsiveSizes.size36,
                               fontWeight: FontWeight.bold,
                               textAlignment: TextAlign.center,
                               textColor: AppPallete.kenicRed,
@@ -259,7 +264,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                             Inter(
                               text:
                                   'Establish your digital presence with premium domains\nfrom Kenya and beyond',
-                              fontSize: 16,
+                              fontSize: ResponsiveSizes.size16,
                               fontWeight: FontWeight.normal,
                               textColor: AppPallete.greyColor,
                               textAlignment: TextAlign.center,
@@ -308,7 +313,7 @@ class _HomeDashboardState extends State<HomeDashboard>
               hintText: 'Search for your perfect domain...',
               hintStyle: TextStyle(
                 color: AppPallete.greyColor.withOpacity(0.7),
-                fontSize: 16,
+                fontSize: ResponsiveSizes.size16,
                 fontWeight: FontWeight.w400,
               ),
               prefixIcon: Container(
@@ -323,19 +328,21 @@ class _HomeDashboardState extends State<HomeDashboard>
                   ),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const HeroIcon(
+                child: HeroIcon(
                   HeroIcons.magnifyingGlass,
-                  size: 20,
+                  size: ResponsiveSizes.size20,
                   color: AppPallete.kenicWhite,
                 ),
               ),
               suffixIcon: Obx(
                 () => GestureDetector(
-                  onTap: () {
+                  onTap: () async {
                     final query = searchController.searchController.text.trim();
                     if (query.isNotEmpty) {
-                      searchController.searchDomains(query);
-                      Get.toNamed('/search-results');
+                      await searchController.searchDomains(query);
+                      if (mounted) {
+                        Get.toNamed('/search-results');
+                      }
                     }
                   },
                   child: Container(
@@ -373,10 +380,12 @@ class _HomeDashboardState extends State<HomeDashboard>
               ),
             ),
 
-            onSubmitted: (value) {
+            onSubmitted: (value) async {
               if (value.trim().isNotEmpty) {
-                searchController.searchDomains(value.trim());
-                Get.toNamed('/search-results');
+                await searchController.searchDomains(value.trim());
+                if (mounted) {
+                  Get.toNamed('/search-results');
+                }
               }
             },
           ),
@@ -386,7 +395,7 @@ class _HomeDashboardState extends State<HomeDashboard>
         Obx(() {
           if (searchController.hasSuggestions) {
             return Container(
-              margin: const EdgeInsets.only(top: 8),
+              margin: EdgeInsets.only(top: ResponsiveSizes.size8),
               decoration: BoxDecoration(
                 color: AppPallete.kenicWhite,
                 borderRadius: BorderRadius.circular(15),
@@ -431,12 +440,14 @@ class _HomeDashboardState extends State<HomeDashboard>
                               ),
                             )
                             : null,
-                    onTap: () {
-                      searchController.searchController.text =
-                          suggestion.domainName;
+                    onTap: () async {
+                      final domainName = suggestion.domainName;
+                      searchController.searchController.text = domainName;
                       searchController.suggestions.clear();
-                      searchController.searchDomains(suggestion.domainName);
-                      Get.toNamed('/search-results');
+                      await searchController.searchDomains(domainName);
+                      if (mounted) {
+                        Get.toNamed('/search-results');
+                      }
                     },
                   );
                 },
@@ -485,7 +496,7 @@ class _HomeDashboardState extends State<HomeDashboard>
 
   Widget _buildPromotionalSection() {
     return Container(
-      margin: const EdgeInsets.all(24),
+      margin: EdgeInsets.all(ResponsiveSizes.size24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -501,7 +512,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(ResponsiveSizes.size24),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -533,7 +544,9 @@ class _HomeDashboardState extends State<HomeDashboard>
                       Container(
                         decoration: BoxDecoration(
                           color: AppPallete.kenicBlack,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveSizes.size12,
+                          ),
                         ),
                         child: IconButton(
                           onPressed: () {
@@ -552,10 +565,10 @@ class _HomeDashboardState extends State<HomeDashboard>
                 spaceW20,
                 // Domain suggestion mockup
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(ResponsiveSizes.size16),
                   decoration: BoxDecoration(
                     color: AppPallete.kenicWhite,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(ResponsiveSizes.size16),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.1),
@@ -568,13 +581,15 @@ class _HomeDashboardState extends State<HomeDashboard>
                     children: [
                       // Search bar mockup
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveSizes.size12,
+                          vertical: ResponsiveSizes.size8,
                         ),
                         decoration: BoxDecoration(
                           color: AppPallete.kenicGrey.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(
+                            ResponsiveSizes.size8,
+                          ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -625,7 +640,7 @@ class _HomeDashboardState extends State<HomeDashboard>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(ResponsiveSizes.size24),
               boxShadow: [
                 BoxShadow(
                   color: AppPallete.kenicRed.withOpacity(0.3),
@@ -682,18 +697,20 @@ class _HomeDashboardState extends State<HomeDashboard>
                 spaceW20,
                 // Kenya flag colors accent
                 Container(
-                  width: 80,
-                  height: 80,
+                  width: ResponsiveSizes.size80,
+                  height: ResponsiveSizes.size80,
                   decoration: BoxDecoration(
                     color: AppPallete.kenicWhite.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(ResponsiveSizes.size16),
                   ),
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: EdgeInsets.all(ResponsiveSizes.size8),
                       decoration: BoxDecoration(
                         color: AppPallete.kenicWhite,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(
+                          ResponsiveSizes.size12,
+                        ),
                       ),
                       child: Inter(
                         text: '.co.ke',
@@ -755,7 +772,7 @@ class _HomeDashboardState extends State<HomeDashboard>
           children: [
             Inter(
               text: 'Popular Extensions',
-              fontSize: 22,
+              fontSize: ResponsiveSizes.size22,
               fontWeight: FontWeight.bold,
               textColor: AppPallete.kenicBlack,
             ),
@@ -764,7 +781,7 @@ class _HomeDashboardState extends State<HomeDashboard>
               onPressed: () {},
               child: Inter(
                 text: 'View All',
-                fontSize: 14,
+                fontSize: ResponsiveSizes.size14,
                 fontWeight: FontWeight.w600,
                 textColor: AppPallete.kenicRed,
               ),
@@ -872,16 +889,16 @@ class _HomeDashboardState extends State<HomeDashboard>
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const HeroIcon(
+              child: HeroIcon(
                 HeroIcons.fire,
-                size: 20,
+                size: ResponsiveSizes.size20,
                 color: AppPallete.kenicWhite,
               ),
             ),
             spaceW12,
             Inter(
               text: 'Trending Now',
-              fontSize: 22,
+              fontSize: ResponsiveSizes.size22,
               fontWeight: FontWeight.bold,
               textColor: AppPallete.kenicBlack,
             ),
@@ -897,9 +914,9 @@ class _HomeDashboardState extends State<HomeDashboard>
                   return GestureDetector(
                     onTap: () => searchController.searchFromKeyword(keyword),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveSizes.size16,
+                        vertical: ResponsiveSizes.size10,
                       ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -958,7 +975,7 @@ class _HomeDashboardState extends State<HomeDashboard>
               spaceW10,
               Inter(
                 text: 'Recent Searches',
-                fontSize: 18,
+                fontSize: ResponsiveSizes.size18,
                 fontWeight: FontWeight.w600,
                 textColor: AppPallete.kenicBlack,
               ),
@@ -967,30 +984,30 @@ class _HomeDashboardState extends State<HomeDashboard>
           spaceH15,
           ...searchController.recentSearches.take(3).map((search) {
             return Container(
-              margin: const EdgeInsets.only(bottom: 8),
+              margin: EdgeInsets.only(bottom: ResponsiveSizes.size8),
               decoration: BoxDecoration(
                 color: AppPallete.kenicGrey.withOpacity(0.5),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 4,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveSizes.size16,
+                  vertical: ResponsiveSizes.size5,
                 ),
-                leading: const HeroIcon(
+                leading: HeroIcon(
                   HeroIcons.magnifyingGlass,
-                  size: 18,
+                  size: ResponsiveSizes.size18,
                   color: AppPallete.greyColor,
                 ),
                 title: Inter(
                   text: search,
-                  fontSize: 15,
+                  fontSize: ResponsiveSizes.size15,
                   fontWeight: FontWeight.w500,
                   textColor: AppPallete.kenicBlack,
                 ),
-                trailing: const HeroIcon(
+                trailing: HeroIcon(
                   HeroIcons.arrowRight,
-                  size: 16,
+                  size: ResponsiveSizes.size16,
                   color: AppPallete.greyColor,
                 ),
                 onTap: () => searchController.searchFromKeyword(search),

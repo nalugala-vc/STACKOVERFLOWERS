@@ -376,6 +376,32 @@ class _OrdersPageState extends State<OrdersPage>
               ],
             ),
             spaceH12,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppPallete.kenicGrey.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const HeroIcon(
+                    HeroIcons.globeAlt,
+                    size: 14,
+                    color: AppPallete.kenicRed,
+                  ),
+                  spaceW5,
+                  Inter(
+                    text:
+                        '${order.items.length} ${order.items.length == 1 ? 'domain' : 'domains'}',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    textColor: AppPallete.kenicBlack,
+                  ),
+                ],
+              ),
+            ),
+            spaceH12,
 
             // Status and Price
             Row(
@@ -408,34 +434,7 @@ class _OrdersPageState extends State<OrdersPage>
                   ),
                 ),
                 spaceW10,
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppPallete.kenicGrey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const HeroIcon(
-                        HeroIcons.globeAlt,
-                        size: 14,
-                        color: AppPallete.kenicRed,
-                      ),
-                      spaceW5,
-                      Inter(
-                        text:
-                            '${order.items.length} ${order.items.length == 1 ? 'domain' : 'domains'}',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        textColor: AppPallete.kenicBlack,
-                      ),
-                    ],
-                  ),
-                ),
+
                 const Spacer(),
                 Inter(
                   text: ordersController.formatCurrency(

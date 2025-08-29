@@ -49,7 +49,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 _buildNavItem(
                   index: 1,
                   icon: HeroIcons.globeAlt,
-                  label: 'My Domains',
+                  label: 'Domains',
                 ),
                 _buildNavItem(
                   index: 2,

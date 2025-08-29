@@ -81,6 +81,17 @@ class CartController extends BaseController {
     if (cartIdValue != null) {
       cartId.value = cartIdValue;
       debugPrint('Cart ID: $cartIdValue');
+    } else {
+      // Try to find cart ID in items if not at root level
+      final items = cartData['items'] as List<dynamic>?;
+      if (items?.isNotEmpty == true) {
+        final firstItem = items!.first as Map<String, dynamic>;
+        final cartIdFromItem = firstItem['cart_id'] as int?;
+        if (cartIdFromItem != null) {
+          cartId.value = cartIdFromItem;
+          debugPrint('Cart ID from item: $cartIdFromItem');
+        }
+      }
     }
 
     // Extract cart items
@@ -230,6 +241,9 @@ class CartController extends BaseController {
         (success) async {
           if (success) {
             try {
+              // Fetch cart to get the updated cart ID
+              await fetchCartFromAPI();
+
               // Convert DomainInfo to Domain and add to local cart
               final domain = DomainConverter.domainInfoToDomain(domainInfo);
               addToCart(domain, registrationYears: registrationYears);
