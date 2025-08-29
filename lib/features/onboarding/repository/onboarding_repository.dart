@@ -231,4 +231,34 @@ class OnboardingRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  // ==================== UPDATE USER DETAILS ====================
+  Future<Either<AppFailure, String>> updateUserDetails({
+    required UserDetails userDetails,
+  }) async {
+    final headers = await AppConfigs.authorizedHeaders();
+    final body = jsonEncode(userDetails.toJson());
+
+    try {
+      final response = await http.post(
+        Uri.parse(AppConfigs.appBaseUrl + Endpoints.updateUserDetails),
+        headers: headers,
+        body: body,
+      );
+
+      final resBodyMap = jsonDecode(response.body) as Map<String, dynamic>;
+
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        final message =
+            resBodyMap['message'] ?? 'Failed to update user details';
+        return Left(AppFailure(message));
+      }
+
+      return Right(
+        resBodyMap['message'] ?? 'User details updated successfully',
+      );
+    } catch (e) {
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }

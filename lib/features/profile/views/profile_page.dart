@@ -7,8 +7,7 @@ import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
-import 'package:kenic/features/profile/views/contact_info_page.dart';
-import 'package:kenic/features/profile/views/help_center_page.dart';
+import 'package:kenic/features/profile/routes/profile_routes.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -17,7 +16,6 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authController = Get.find<OnboardingController>();
-    final user = authController.user;
 
     return Scaffold(
       backgroundColor: AppPallete.kenicWhite,
@@ -37,7 +35,7 @@ class ProfilePage extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      AppPallete.kenicRed.withOpacity(0.1),
+                      AppPallete.kenicRed.withValues(alpha: 0.1),
                       AppPallete.kenicWhite,
                     ],
                   ),
@@ -54,43 +52,51 @@ class ProfilePage extends StatelessWidget {
                           gradient: LinearGradient(
                             colors: [
                               AppPallete.kenicRed,
-                              AppPallete.kenicRed.withOpacity(0.8),
+                              AppPallete.kenicRed.withValues(alpha: 0.8),
                             ],
                           ),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
-                          child:
-                              user?.firstName.isNotEmpty == true
-                                  ? Inter(
-                                    text: user!.firstName[0].toUpperCase(),
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    textColor: AppPallete.kenicWhite,
-                                  )
-                                  : const Icon(
-                                    Icons.person,
-                                    size: 40,
-                                    color: AppPallete.kenicWhite,
-                                  ),
+                          child: Obx(() {
+                            final user = authController.user;
+                            return user?.firstName.isNotEmpty == true
+                                ? Inter(
+                                  text: user!.firstName[0].toUpperCase(),
+                                  fontSize: 32,
+                                  fontWeight: FontWeight.bold,
+                                  textColor: AppPallete.kenicWhite,
+                                )
+                                : const Icon(
+                                  Icons.person,
+                                  size: 40,
+                                  color: AppPallete.kenicWhite,
+                                );
+                          }),
                         ),
                       ),
                       spaceH15,
-                      Inter(
-                        text:
-                            user != null
-                                ? '${user.firstName} ${user.lastName}'
-                                : 'Guest User',
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        textColor: AppPallete.kenicBlack,
-                      ),
-                      Inter(
-                        text: user?.email ?? 'No email provided',
-                        fontSize: 14,
-                        fontWeight: FontWeight.normal,
-                        textColor: AppPallete.greyColor,
-                      ),
+                      Obx(() {
+                        final user = authController.user;
+                        return Inter(
+                          text:
+                              user != null
+                                  ? '${user.firstName} ${user.lastName}'
+                                  : 'Guest User',
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          textColor: AppPallete.kenicBlack,
+                        );
+                      }),
+                      Obx(() {
+                        final user = authController.user;
+                        return Inter(
+                          text: user?.email ?? 'No email provided',
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                          textColor: AppPallete.greyColor,
+                        );
+                      }),
                     ],
                   ),
                 ),
@@ -107,7 +113,8 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.user,
                       title: 'Personal Information',
                       subtitle: 'Update your profile details',
-                      onTap: () {},
+                      onTap:
+                          () => Get.toNamed(ProfileRoutes.personalInformation),
                     ),
                     _buildProfileItem(
                       icon: HeroIcons.key,
@@ -122,13 +129,13 @@ class ProfilePage extends StatelessWidget {
                       icon: HeroIcons.questionMarkCircle,
                       title: 'Help Center',
                       subtitle: 'Get help and support',
-                      onTap: () => Get.to(() => const HelpCenterPage()),
+                      onTap: () => Get.toNamed(ProfileRoutes.helpCenter),
                     ),
                     _buildProfileItem(
                       icon: HeroIcons.chatBubbleLeftRight,
                       title: 'Contact Us',
                       subtitle: 'Reach out to our support team',
-                      onTap: () => Get.to(() => const ContactInfoPage()),
+                      onTap: () => Get.toNamed(ProfileRoutes.contactInfo),
                     ),
                     _buildProfileItem(
                       icon: HeroIcons.documentText,
@@ -202,7 +209,7 @@ class ProfilePage extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
@@ -229,8 +236,8 @@ class ProfilePage extends StatelessWidget {
         decoration: BoxDecoration(
           color:
               isDestructive
-                  ? Colors.red.withOpacity(0.1)
-                  : AppPallete.kenicRed.withOpacity(0.1),
+                  ? Colors.red.withValues(alpha: 0.1)
+                  : AppPallete.kenicRed.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
         ),
         child: HeroIcon(

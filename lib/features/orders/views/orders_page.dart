@@ -4,6 +4,7 @@ import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/core/utils/widgets/empty_widget.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/orders/controllers/orders_controller.dart';
 import 'package:kenic/features/orders/models/models.dart';
@@ -253,42 +254,18 @@ class _OrdersPageState extends State<OrdersPage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppPallete.kenicGrey.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: HeroIcon(
-                isUnpaidTab
-                    ? HeroIcons.exclamationTriangle
-                    : HeroIcons.checkCircle,
-                size: 60,
-                color: AppPallete.greyColor,
-              ),
-            ),
-            spaceH20,
-            Inter(
-              text: isUnpaidTab ? 'No unpaid orders' : 'No paid orders',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              textColor: AppPallete.kenicBlack,
-            ),
-            spaceH10,
-            Inter(
-              text:
+            EmptyWidget(
+              title: isUnpaidTab ? 'No unpaid orders' : 'No paid orders',
+              description:
                   isUnpaidTab
                       ? 'All your orders are paid and active'
                       : 'You haven\'t completed any payments yet',
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              textColor: AppPallete.greyColor,
-              textAlignment: TextAlign.center,
             ),
             spaceH30,
             RoundedButton(
               onPressed: () => Get.offAllNamed('/main'),
               label: 'Browse Domains',
+              fontsize: 16,
               width: 200,
             ),
           ],

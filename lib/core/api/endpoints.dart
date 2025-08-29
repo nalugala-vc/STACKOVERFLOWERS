@@ -6,6 +6,7 @@ class Endpoints {
   static const String verifyOtp = '/api/otp/verify';
   static const String changePassword = '/api/password/change';
   static const String deleteUser = '/api/user/delete';
+  static const String updateUserDetails = '/api/user/details';
 
   //Domain
   static const String domainSearch = '/api/domains/search';

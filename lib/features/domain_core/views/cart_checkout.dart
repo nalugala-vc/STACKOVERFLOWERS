@@ -4,6 +4,7 @@ import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/core/utils/widgets/empty_widget.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
 import 'package:kenic/features/domain_core/models/cart.dart';
@@ -87,29 +88,17 @@ class _CartCheckoutState extends State<CartCheckout> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const HeroIcon(
-              HeroIcons.shoppingBag,
-              size: 80,
-              color: AppPallete.greyColor,
+            EmptyWidget(
+              title: 'Your cart is empty',
+              description:
+                  'Start searching for domains to add them to your cart',
             ),
-            spaceH20,
-            Inter(
-              text: 'Your cart is empty',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-            ),
-            spaceH10,
-            Inter(
-              text: 'Start searching for domains to add them to your cart',
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              textColor: AppPallete.greyColor,
-              textAlignment: TextAlign.center,
-            ),
+
             spaceH30,
             RoundedButton(
               onPressed: () => Get.offAllNamed('/main'),
               label: 'Search Domains',
+              fontsize: 16,
               width: 200,
             ),
           ],

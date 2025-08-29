@@ -12,6 +12,10 @@ import 'package:kenic/features/domain_core/views/payment_confirmation.dart';
 import 'package:kenic/features/navigation/views/main_navigation.dart';
 import 'package:kenic/features/orders/views/orders_page.dart';
 import 'package:kenic/features/profile/views/profile_page.dart';
+import 'package:kenic/features/profile/views/personal_information_page.dart';
+import 'package:kenic/features/profile/views/contact_info_page.dart';
+import 'package:kenic/features/profile/views/help_center_page.dart';
+import 'package:kenic/features/profile/routes/profile_routes.dart';
 import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 import 'package:kenic/features/onboarding/views/change_password.dart';
 import 'package:kenic/features/onboarding/views/verify_otp.dart';
@@ -59,6 +63,21 @@ class AppRoutes {
     GetPage(
       name: '/profile',
       page: () => const ProfilePage(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: ProfileRoutes.personalInformation,
+      page: () => const PersonalInformationPage(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: ProfileRoutes.contactInfo,
+      page: () => const ContactInfoPage(),
+      middlewares: [authMiddleware],
+    ),
+    GetPage(
+      name: ProfileRoutes.helpCenter,
+      page: () => const HelpCenterPage(),
       middlewares: [authMiddleware],
     ),
     GetPage(
