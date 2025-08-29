@@ -61,9 +61,9 @@ class ProfilePage extends StatelessWidget {
                         ),
                         child: Center(
                           child:
-                              user?.name.isNotEmpty == true
+                              user?.firstName.isNotEmpty == true
                                   ? Inter(
-                                    text: user!.name[0].toUpperCase(),
+                                    text: user!.firstName[0].toUpperCase(),
                                     fontSize: 32,
                                     fontWeight: FontWeight.bold,
                                     textColor: AppPallete.kenicWhite,
@@ -77,7 +77,10 @@ class ProfilePage extends StatelessWidget {
                       ),
                       spaceH15,
                       Inter(
-                        text: user?.name ?? 'Guest User',
+                        text:
+                            user != null
+                                ? '${user.firstName} ${user.lastName}'
+                                : 'Guest User',
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         textColor: AppPallete.kenicBlack,

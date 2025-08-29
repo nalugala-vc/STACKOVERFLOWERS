@@ -1,6 +1,7 @@
 class User {
   final int id;
-  final String name;
+  final String firstName;
+  final String lastName;
   final String email;
   final String phoneNumber;
   final String? emailVerifiedAt;
@@ -10,7 +11,8 @@ class User {
 
   User({
     required this.id,
-    required this.name,
+    required this.firstName,
+    required this.lastName,
     required this.email,
     required this.phoneNumber,
     this.emailVerifiedAt,
@@ -22,7 +24,8 @@ class User {
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as int,
-      name: json['name'] as String,
+      firstName: json['firstname'] as String,
+      lastName: json['lastname'] as String,
       email: json['email'] as String,
       phoneNumber: json['phone_number'] as String,
       emailVerifiedAt: json['email_verified_at'] as String?,
@@ -35,7 +38,8 @@ class User {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'name': name,
+      'firstname': firstName,
+      'lastname': lastName,
       'email': email,
       'phone_number': phoneNumber,
       'email_verified_at': emailVerifiedAt,
@@ -47,7 +51,8 @@ class User {
 
   User copyWith({
     int? id,
-    String? name,
+    String? firstName,
+    String? lastName,
     String? email,
     String? phoneNumber,
     String? emailVerifiedAt,
@@ -57,7 +62,8 @@ class User {
   }) {
     return User(
       id: id ?? this.id,
-      name: name ?? this.name,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
       email: email ?? this.email,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       emailVerifiedAt: emailVerifiedAt ?? this.emailVerifiedAt,
@@ -69,7 +75,7 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, phoneNumber: $phoneNumber, emailVerifiedAt: $emailVerifiedAt, createdAt: $createdAt, updatedAt: $updatedAt, token: $token)';
+    return 'User(id: $id, firstName: $firstName, lastName: $lastName, email: $email, phoneNumber: $phoneNumber, emailVerifiedAt: $emailVerifiedAt, createdAt: $createdAt, updatedAt: $updatedAt, token: $token)';
   }
 
   @override
@@ -77,7 +83,8 @@ class User {
     if (identical(this, other)) return true;
     return other is User &&
         other.id == id &&
-        other.name == name &&
+        other.firstName == firstName &&
+        other.lastName == lastName &&
         other.email == email &&
         other.phoneNumber == phoneNumber &&
         other.emailVerifiedAt == emailVerifiedAt &&
@@ -89,7 +96,8 @@ class User {
   @override
   int get hashCode {
     return id.hashCode ^
-        name.hashCode ^
+        firstName.hashCode ^
+        lastName.hashCode ^
         email.hashCode ^
         phoneNumber.hashCode ^
         emailVerifiedAt.hashCode ^

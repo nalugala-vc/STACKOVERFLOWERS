@@ -15,7 +15,8 @@ class OnboardingController extends BaseController {
   final OnboardingRepository _repository = OnboardingRepository();
 
   // Controllers
-  final name = TextEditingController();
+  final firstName = TextEditingController();
+  final lastName = TextEditingController();
   final email = TextEditingController();
   final phone = TextEditingController();
   final password = TextEditingController();
@@ -56,7 +57,8 @@ class OnboardingController extends BaseController {
 
   @override
   void onClose() {
-    name.dispose();
+    firstName.dispose();
+    lastName.dispose();
     email.dispose();
     phone.dispose();
     password.dispose();
@@ -133,7 +135,8 @@ class OnboardingController extends BaseController {
     required String phoneNumber,
     required String email,
     required String password,
-    required String name,
+    required String firstName,
+    required String lastName,
   }) async {
     isLoading.value = true;
     errorMessage.value = '';
@@ -143,7 +146,8 @@ class OnboardingController extends BaseController {
         phoneNumber: phoneNumber,
         email: email,
         password: password,
-        name: name,
+        firstName: firstName,
+        lastName: lastName,
       );
       debugPrint('phoneNumber: $phoneNumber');
       debugPrint('result: $result');
@@ -288,12 +292,22 @@ class OnboardingController extends BaseController {
     return null;
   }
 
-  String? validateName(String name) {
-    if (name.isEmpty) {
-      return 'Name is required';
+  String? validateFirstName(String firstName) {
+    if (firstName.isEmpty) {
+      return 'First name is required';
     }
-    if (name.length < 2) {
-      return 'Name must be at least 2 characters long';
+    if (firstName.length < 2) {
+      return 'First name must be at least 2 characters long';
+    }
+    return null;
+  }
+
+  String? validateLastName(String lastName) {
+    if (lastName.isEmpty) {
+      return 'Last name is required';
+    }
+    if (lastName.length < 2) {
+      return 'Last name must be at least 2 characters long';
     }
     return null;
   }
@@ -373,7 +387,8 @@ class OnboardingController extends BaseController {
 
   // ==================== FORM VALIDATION ====================
   bool validateSignUpForm() {
-    final nameError = validateName(name.text);
+    final firstNameError = validateFirstName(firstName.text);
+    final lastNameError = validateLastName(lastName.text);
     final emailError = validateEmail(email.text);
     final phoneError = validatePhone(phone.text);
     final passwordError = validatePassword(password.text);
@@ -382,8 +397,12 @@ class OnboardingController extends BaseController {
       confirmPassword.text,
     );
 
-    if (nameError != null) {
-      errorMessage.value = nameError;
+    if (firstNameError != null) {
+      errorMessage.value = firstNameError;
+      return false;
+    }
+    if (lastNameError != null) {
+      errorMessage.value = lastNameError;
       return false;
     }
     if (emailError != null) {
@@ -495,7 +514,8 @@ class OnboardingController extends BaseController {
       // For now, we'll create a minimal user object with just the token
       currentUser.value = User(
         id: 0, // Placeholder ID
-        name: '', // Will be updated when we add the user profile endpoint
+        firstName: '', // Will be updated when we add the user profile endpoint
+        lastName: '', // Will be updated when we add the user profile endpoint
         email: '',
         phoneNumber: '',
         createdAt: DateTime.now().toIso8601String(),

@@ -108,7 +108,7 @@ class _CartCheckoutState extends State<CartCheckout> {
             ),
             spaceH30,
             RoundedButton(
-              onPressed: () => Get.offAllNamed('/home'),
+              onPressed: () => Get.offAllNamed('/main'),
               label: 'Search Domains',
               width: 200,
             ),

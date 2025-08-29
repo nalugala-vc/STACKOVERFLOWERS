@@ -8,6 +8,7 @@ import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:country_code_picker/country_code_picker.dart';
+import 'package:kenic/features/onboarding/routes/onboarding_routes.dart';
 
 class Signup extends StatefulWidget {
   const Signup({super.key});
@@ -40,7 +41,8 @@ class _SignupState extends State<Signup> {
     if (_formKey.currentState!.validate()) {
       controller
           .createUser(
-            name: controller.name.text.trim(),
+            firstName: controller.firstName.text.trim(),
+            lastName: controller.lastName.text.trim(),
             email: controller.email.text.trim(),
             phoneNumber: getFullPhoneNumber(),
             password: controller.password.text,
@@ -52,7 +54,7 @@ class _SignupState extends State<Signup> {
 
               if (verificationResult.isRight()) {
                 // Redirect to OTP verification page
-                Get.offAllNamed('/verify-otp');
+                Get.offAllNamed(OnboardingRoutes.verifyOtp);
               } else {
                 verificationResult.fold(
                   (failure) => Get.snackbar(
@@ -114,16 +116,30 @@ class _SignupState extends State<Signup> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Inter(
-                        text: 'Full Name',
+                        text: 'First Name',
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
                       ),
                       spaceH10,
                       AuthField(
-                        controller: controller.name,
+                        controller: controller.firstName,
                         hintText: '',
                         validator:
-                            (value) => controller.validateName(value ?? ''),
+                            (value) =>
+                                controller.validateFirstName(value ?? ''),
+                      ),
+                      spaceH20,
+                      Inter(
+                        text: 'Last Name',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      spaceH10,
+                      AuthField(
+                        controller: controller.lastName,
+                        hintText: '',
+                        validator:
+                            (value) => controller.validateLastName(value ?? ''),
                       ),
                     ],
                   ),

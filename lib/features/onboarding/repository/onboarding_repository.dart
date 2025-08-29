@@ -14,12 +14,14 @@ class OnboardingRepository {
     required String phoneNumber,
     required String email,
     required String password,
-    required String name,
+    required String firstName,
+    required String lastName,
   }) async {
     final headers = await AppConfigs.authorizedHeaders();
     final body = jsonEncode({
       "email": email,
-      "name": name,
+      "firstname": firstName,
+      "lastname": lastName,
       "phone_number": phoneNumber,
       "password": password,
     });
@@ -45,7 +47,8 @@ class OnboardingRepository {
 
       final user = User(
         id: userInfo['id'] as int,
-        name: userInfo['name'] as String,
+        firstName: userInfo['firstname'] as String,
+        lastName: userInfo['lastname'] as String,
         email: userInfo['email'] as String,
         phoneNumber: userInfo['phone_number'] as String,
         emailVerifiedAt: userInfo['email_verified_at'] as String?,
@@ -87,7 +90,8 @@ class OnboardingRepository {
 
       final user = User(
         id: userInfo['id'] as int,
-        name: userInfo['name'] as String,
+        firstName: userInfo['firstname'] as String,
+        lastName: userInfo['lastname'] as String,
         email: userInfo['email'] as String,
         phoneNumber: userInfo['phone_number'] as String,
         emailVerifiedAt: userInfo['email_verified_at'] as String?,
