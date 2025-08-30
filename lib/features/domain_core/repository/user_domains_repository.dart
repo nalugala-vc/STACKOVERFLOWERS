@@ -54,4 +54,70 @@ class UserDomainsRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  // ==================== DOMAIN NAMESERVERS ====================
+  Future<Either<AppFailure, NameserversResponse>> getDomainNameservers({
+    required int domainId,
+  }) async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final response = await http.get(
+        Uri.parse(
+          '${AppConfigs.appBaseUrl}${Endpoints.domainNameservers}?domainid=$domainId',
+        ),
+        headers: headers,
+      );
+
+      debugPrint('Nameservers response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        return Left(AppFailure('Failed to fetch domain nameservers'));
+      }
+
+      final dynamic responseBody = jsonDecode(response.body);
+
+      if (responseBody is! Map<String, dynamic>) {
+        return Left(AppFailure('Invalid nameservers response format'));
+      }
+
+      final nameserversResponse = NameserversResponse.fromJson(responseBody);
+      return Right(nameserversResponse);
+    } catch (e) {
+      debugPrint('Error in getDomainNameservers: $e');
+      return Left(AppFailure(e.toString()));
+    }
+  }
+
+  // ==================== DOMAIN EPP CODE ====================
+  Future<Either<AppFailure, EppCodeResponse>> getDomainEppCode({
+    required int domainId,
+  }) async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final response = await http.get(
+        Uri.parse(
+          '${AppConfigs.appBaseUrl}${Endpoints.domainEppCode}?domainid=$domainId',
+        ),
+        headers: headers,
+      );
+
+      debugPrint('EPP code response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        return Left(AppFailure('Failed to fetch domain EPP code'));
+      }
+
+      final dynamic responseBody = jsonDecode(response.body);
+
+      if (responseBody is! Map<String, dynamic>) {
+        return Left(AppFailure('Invalid EPP code response format'));
+      }
+
+      final eppCodeResponse = EppCodeResponse.fromJson(responseBody);
+      return Right(eppCodeResponse);
+    } catch (e) {
+      debugPrint('Error in getDomainEppCode: $e');
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }

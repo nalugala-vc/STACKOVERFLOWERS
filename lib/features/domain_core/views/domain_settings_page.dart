@@ -12,20 +12,33 @@ import 'package:kenic/features/domain_core/views/register_nameservers_page.dart'
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
 import 'package:kenic/core/utils/widgets/ai_info_bottom_sheet.dart';
 
-class DomainSettingsPage extends StatelessWidget {
+class DomainSettingsPage extends StatefulWidget {
   final UserDomain domain;
 
   const DomainSettingsPage({super.key, required this.domain});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.find<DomainController>();
+  State<DomainSettingsPage> createState() => _DomainSettingsPageState();
+}
 
+class _DomainSettingsPageState extends State<DomainSettingsPage> {
+  late DomainController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<DomainController>();
+    // Fetch nameservers when page loads
+    controller.fetchDomainNameservers(widget.domain.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPallete.scaffoldBg,
       appBar: AppBar(
         title: Inter(
-          text: domain.domainName,
+          text: widget.domain.domainName,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           textColor: AppPallete.kenicBlack,
@@ -48,10 +61,10 @@ class DomainSettingsPage extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  domain.isExpired
+                  widget.domain.isExpired
                       ? const Color(0xFFE57373)
                       : const Color(0xFF81C784),
-                  domain.isExpired
+                  widget.domain.isExpired
                       ? const Color(0xFFEF5350)
                       : const Color(0xFF66BB6A),
                 ],
@@ -70,7 +83,7 @@ class DomainSettingsPage extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: HeroIcon(
-                        domain.isExpired
+                        widget.domain.isExpired
                             ? HeroIcons.exclamationTriangle
                             : HeroIcons.checkCircle,
                         color: Colors.white,
@@ -83,14 +96,15 @@ class DomainSettingsPage extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Inter(
-                            text: domain.isExpired ? 'Expired' : 'Active',
+                            text:
+                                widget.domain.isExpired ? 'Expired' : 'Active',
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                             textColor: Colors.white,
                           ),
                           Inter(
                             text:
-                                domain.isExpired
+                                widget.domain.isExpired
                                     ? 'Domain needs renewal'
                                     : 'Domain is active and working',
                             fontSize: 14,
@@ -112,23 +126,23 @@ class DomainSettingsPage extends StatelessWidget {
                     children: [
                       _buildStatusRow(
                         'Purchased',
-                        DateFormat('MMM dd, yyyy').format(domain.purchaseDate),
+                        DateFormat(
+                          'MMM dd, yyyy',
+                        ).format(widget.domain.purchaseDate),
                         textColor: Colors.white,
                       ),
                       const Divider(height: 16, color: Colors.white24),
                       _buildStatusRow(
-                        'Expires',
-                        domain.expiryDate != null
-                            ? DateFormat(
-                              'MMM dd, yyyy',
-                            ).format(domain.expiryDate!)
-                            : 'Not set',
+                        'Next Due',
+                        DateFormat(
+                          'MMM dd, yyyy',
+                        ).format(widget.domain.nextDueDate),
                         textColor: Colors.white,
                       ),
                     ],
                   ),
                 ),
-                if (domain.isExpired) ...[
+                if (widget.domain.isExpired) ...[
                   spaceH20,
                   SizedBox(
                     width: double.infinity,
@@ -137,9 +151,9 @@ class DomainSettingsPage extends StatelessWidget {
                         Get.toNamed(
                           '/checkout',
                           arguments: {
-                            'amount': domain.renewalPrice,
+                            'amount': widget.domain.renewalPrice,
                             'isRenewal': true,
-                            'domain': domain.domainName,
+                            'domain': widget.domain.domainName,
                           },
                         );
                       },
@@ -152,7 +166,7 @@ class DomainSettingsPage extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Renew Now - \$${domain.renewalPrice.toStringAsFixed(2)}',
+                        'Renew Now - \$${widget.domain.renewalPrice.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -180,7 +194,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Nameservers',
                       initialQuestion: 'What is a nameserver?',
                       domainContext:
-                          'Domain: ${domain.domainName}. Nameservers are DNS servers that translate domain names to IP addresses.',
+                          'Domain: ${widget.domain.domainName}. Nameservers are DNS servers that translate domain names to IP addresses.',
                     ),
               );
             },
@@ -191,69 +205,108 @@ class DomainSettingsPage extends StatelessWidget {
                   color: AppPallete.kenicWhite,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  children: [
-                    ...domain.nameservers.map(
-                      (ns) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppPallete.kenicRed.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const HeroIcon(
-                                HeroIcons.serverStack,
-                                size: 16,
-                                color: AppPallete.kenicRed,
-                              ),
-                            ),
-                            spaceW10,
-                            Expanded(
-                              child: Inter(
-                                text: ns,
-                                fontSize: 14,
+                child: Obx(() {
+                  final nameservers = controller.getNameservers(
+                    widget.domain.id,
+                  );
 
-                                textAlignment: TextAlign.left,
-                                textColor: AppPallete.kenicBlack,
+                  if (controller.isLoadingNameservers.value) {
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: AppPallete.kenicRed,
+                      ),
+                    );
+                  }
+
+                  if (nameservers.isEmpty) {
+                    return Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: AppPallete.kenicGrey.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const HeroIcon(
+                            HeroIcons.serverStack,
+                            size: 40,
+                            color: AppPallete.greyColor,
+                          ),
+                        ),
+                        spaceH10,
+                        Inter(
+                          text: 'No nameservers found',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          textColor: AppPallete.greyColor,
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Column(
+                    children: [
+                      ...nameservers.map(
+                        (ns) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppPallete.kenicRed.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const HeroIcon(
+                                  HeroIcons.serverStack,
+                                  size: 16,
+                                  color: AppPallete.kenicRed,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    spaceH10,
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Get.to(
-                            () => EditNameserversPage(
-                              domainName: domain.domainName,
-                              currentNameservers: domain.nameservers,
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppPallete.kenicWhite,
-                          foregroundColor: AppPallete.kenicRed,
-                          elevation: 0,
-                          side: const BorderSide(
-                            color: AppPallete.kenicRed,
-                            width: 1,
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                              spaceW10,
+                              Expanded(
+                                child: Inter(
+                                  text: ns,
+                                  fontSize: 14,
+                                  textAlignment: TextAlign.left,
+                                  textColor: AppPallete.kenicBlack,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        child: const Text('Edit Nameservers'),
                       ),
-                    ),
-                  ],
-                ),
+                      spaceH10,
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Get.to(
+                              () => EditNameserversPage(
+                                domainName: widget.domain.domainName,
+                                currentNameservers: nameservers,
+                              ),
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppPallete.kenicWhite,
+                            foregroundColor: AppPallete.kenicRed,
+                            elevation: 0,
+                            side: const BorderSide(
+                              color: AppPallete.kenicRed,
+                              width: 1,
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text('Edit Nameservers'),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
               ),
             ],
           ),
@@ -273,7 +326,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Private Nameservers',
                       initialQuestion: 'What is a private nameserver?',
                       domainContext:
-                          'Domain: ${domain.domainName}. Private nameservers are custom DNS servers that you control.',
+                          'Domain: ${widget.domain.domainName}. Private nameservers are custom DNS servers that you control.',
                     ),
               );
             },
@@ -287,7 +340,7 @@ class DomainSettingsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (domain.privateNameservers.isEmpty)
+                    if (widget.domain.privateNameservers.isEmpty)
                       Row(
                         children: [
                           Container(
@@ -311,7 +364,7 @@ class DomainSettingsPage extends StatelessWidget {
                         ],
                       )
                     else
-                      ...domain.privateNameservers.map(
+                      ...widget.domain.privateNameservers.map(
                         (ns) => Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
@@ -347,8 +400,9 @@ class DomainSettingsPage extends StatelessWidget {
                         onPressed: () {
                           Get.to(
                             () => RegisterNameserversPage(
-                              domainName: domain.domainName,
-                              currentNameservers: domain.privateNameservers,
+                              domainName: widget.domain.domainName,
+                              currentNameservers:
+                                  widget.domain.privateNameservers,
                             ),
                           );
                         },
@@ -389,7 +443,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Domain Security',
                       initialQuestion: 'What is a registrar lock and EPP code?',
                       domainContext:
-                          'Domain: ${domain.domainName}. These are security features to protect your domain from unauthorized transfers.',
+                          'Domain: ${widget.domain.domainName}. These are security features to protect your domain from unauthorized transfers.',
                     ),
               );
             },
@@ -453,7 +507,7 @@ class DomainSettingsPage extends StatelessWidget {
                                                 initialQuestion:
                                                     'What is a registrar lock?',
                                                 domainContext:
-                                                    'Domain: ${domain.domainName}. A registrar lock prevents unauthorized domain transfers.',
+                                                    'Domain: ${widget.domain.domainName}. A registrar lock prevents unauthorized domain transfers.',
                                               ),
                                         );
                                       },
@@ -487,10 +541,10 @@ class DomainSettingsPage extends StatelessWidget {
                             ),
                           ),
                           Switch(
-                            value: domain.registrarLock,
+                            value: widget.domain.registrarLock,
                             onChanged:
                                 (value) => controller.toggleRegistrarLock(
-                                  domain.domainName,
+                                  widget.domain.domainName,
                                 ),
                             activeColor: AppPallete.kenicRed,
                           ),
@@ -500,12 +554,13 @@ class DomainSettingsPage extends StatelessWidget {
                     spaceH12,
                     // EPP Code
                     InkWell(
-                      onTap: () {
-                        // Show EPP code dialog with dummy code for now
-                        CustomDialogs.showEppCodeDialog(
-                          context,
-                          'ABC123-XYZ789-DEF456', // This would come from your API in production
+                      onTap: () async {
+                        final eppCode = await controller.fetchDomainEppCode(
+                          widget.domain.id,
                         );
+                        if (eppCode != null) {
+                          CustomDialogs.showEppCodeDialog(context, eppCode);
+                        }
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
@@ -557,7 +612,7 @@ class DomainSettingsPage extends StatelessWidget {
                                                   initialQuestion:
                                                       'What is an EPP code?',
                                                   domainContext:
-                                                      'Domain: ${domain.domainName}. An EPP code is an authorization code required for domain transfers.',
+                                                      'Domain: ${widget.domain.domainName}. An EPP code is an authorization code required for domain transfers.',
                                                 ),
                                           );
                                         },
@@ -584,7 +639,6 @@ class DomainSettingsPage extends StatelessWidget {
                                     text:
                                         'Get authorization code for domain transfer',
                                     fontSize: 14,
-
                                     fontWeight: FontWeight.normal,
                                     textAlignment: TextAlign.left,
                                     textColor: AppPallete.greyColor,
@@ -592,11 +646,23 @@ class DomainSettingsPage extends StatelessWidget {
                                 ],
                               ),
                             ),
-                            const HeroIcon(
-                              HeroIcons.chevronRight,
-                              size: 20,
-                              color: AppPallete.kenicBlack,
-                            ),
+                            Obx(() {
+                              if (controller.isLoadingEppCode.value) {
+                                return const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppPallete.kenicRed,
+                                  ),
+                                );
+                              }
+                              return const HeroIcon(
+                                HeroIcons.chevronRight,
+                                size: 20,
+                                color: AppPallete.kenicBlack,
+                              );
+                            }),
                           ],
                         ),
                       ),

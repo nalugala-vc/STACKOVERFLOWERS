@@ -12,6 +12,8 @@ class Endpoints {
   static const String domainSearch = '/api/domains/search';
   static const String domainSuggestions = '/api/domains/suggestions';
   static const String userDomains = '/api/user/domains';
+  static const String domainNameservers = '/api/domains/nameservers';
+  static const String domainEppCode = '/api/domains/epp-code';
 
   //Cart
   static const String cart = '/api/cart';

@@ -58,10 +58,7 @@ class UserDomain {
   double get renewalPrice => double.tryParse(recurringAmount) ?? 0.0;
 
   // Additional properties for backward compatibility
-  List<String> get nameservers => [
-    'ns1.example.com',
-    'ns2.example.com',
-  ]; // Default nameservers
+  List<String> get nameservers => []; // Will be populated from API
   List<String> get privateNameservers => []; // Empty by default
   bool get registrarLock => true; // Default to true
 
@@ -223,5 +220,79 @@ class UserDomainsResponse {
       'numreturned': numReturned,
       'domains': {'domain': domains.map((domain) => domain.toJson()).toList()},
     };
+  }
+}
+
+// Nameservers Response Model
+class NameserversResponse {
+  final bool success;
+  final String message;
+  final NameserversData data;
+
+  NameserversResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory NameserversResponse.fromJson(Map<String, dynamic> json) {
+    return NameserversResponse(
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      data: NameserversData.fromJson(json['data'] ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'success': success, 'message': message, 'data': data.toJson()};
+  }
+}
+
+class NameserversData {
+  final String domainId;
+  final List<String> nameservers;
+  final int count;
+
+  NameserversData({
+    required this.domainId,
+    required this.nameservers,
+    required this.count,
+  });
+
+  factory NameserversData.fromJson(Map<String, dynamic> json) {
+    return NameserversData(
+      domainId: json['domainid'] ?? '',
+      nameservers: List<String>.from(json['nameservers'] ?? []),
+      count: json['count'] ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'domainid': domainId, 'nameservers': nameservers, 'count': count};
+  }
+}
+
+// EPP Code Response Model
+class EppCodeResponse {
+  final bool success;
+  final String message;
+  final String data;
+
+  EppCodeResponse({
+    required this.success,
+    required this.message,
+    required this.data,
+  });
+
+  factory EppCodeResponse.fromJson(Map<String, dynamic> json) {
+    return EppCodeResponse(
+      success: json['success'] ?? false,
+      message: json['message'] ?? '',
+      data: json['data'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'success': success, 'message': message, 'data': data};
   }
 }
