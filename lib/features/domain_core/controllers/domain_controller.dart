@@ -1,11 +1,15 @@
 import 'package:get/get.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
 import 'package:kenic/features/domain_core/models/user_domain.dart';
+import 'package:kenic/features/domain_core/repository/user_domains_repository.dart';
 
 class DomainController extends GetxController {
   final RxBool isLoading = false.obs;
   final RxList<UserDomain> domains = <UserDomain>[].obs;
   final RxInt selectedTabIndex = 0.obs;
+  final RxString errorMessage = ''.obs;
+
+  final UserDomainsRepository _repository = UserDomainsRepository();
 
   @override
   void onInit() {
@@ -13,27 +17,47 @@ class DomainController extends GetxController {
     fetchDomains();
   }
 
-  void fetchDomains() {
+  Future<void> fetchDomains() async {
     isLoading.value = true;
-    // Simulating API call with dummy data
-    Future.delayed(const Duration(seconds: 1), () {
+    errorMessage.value = '';
+
+    try {
+      final result = await _repository.getUserDomains();
+
+      result.fold(
+        (failure) {
+          errorMessage.value = failure.message;
+          // Fallback to dummy data for development
+          domains.value = UserDomain.getDummyDomains();
+        },
+        (response) {
+          domains.value = response.domains;
+        },
+      );
+    } catch (e) {
+      errorMessage.value = 'An unexpected error occurred';
+      // Fallback to dummy data for development
       domains.value = UserDomain.getDummyDomains();
+    } finally {
       isLoading.value = false;
-    });
+    }
   }
 
   List<UserDomain> get activeDomains =>
-      domains.where((domain) => !domain.isExpired).toList();
+      domains.where((domain) => domain.isActive).toList();
 
   List<UserDomain> get expiredDomains =>
       domains.where((domain) => domain.isExpired).toList();
+
+  List<UserDomain> get pendingDomains =>
+      domains.where((domain) => domain.isPending).toList();
 
   void switchTab(int index) {
     selectedTabIndex.value = index;
   }
 
-  void refreshDomains() {
-    fetchDomains();
+  Future<void> refreshDomains() async {
+    await fetchDomains();
   }
 
   void toggleRegistrarLock(String domainName) {

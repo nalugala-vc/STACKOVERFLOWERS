@@ -25,7 +25,7 @@ class DomainSettingsPage extends StatelessWidget {
       backgroundColor: AppPallete.scaffoldBg,
       appBar: AppBar(
         title: Inter(
-          text: domain.name,
+          text: domain.domainName,
           fontSize: 20,
           fontWeight: FontWeight.w600,
           textColor: AppPallete.kenicBlack,
@@ -118,7 +118,11 @@ class DomainSettingsPage extends StatelessWidget {
                       const Divider(height: 16, color: Colors.white24),
                       _buildStatusRow(
                         'Expires',
-                        DateFormat('MMM dd, yyyy').format(domain.expiryDate),
+                        domain.expiryDate != null
+                            ? DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(domain.expiryDate!)
+                            : 'Not set',
                         textColor: Colors.white,
                       ),
                     ],
@@ -135,7 +139,7 @@ class DomainSettingsPage extends StatelessWidget {
                           arguments: {
                             'amount': domain.renewalPrice,
                             'isRenewal': true,
-                            'domain': domain.name,
+                            'domain': domain.domainName,
                           },
                         );
                       },
@@ -176,7 +180,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Nameservers',
                       initialQuestion: 'What is a nameserver?',
                       domainContext:
-                          'Domain: ${domain.name}. Nameservers are DNS servers that translate domain names to IP addresses.',
+                          'Domain: ${domain.domainName}. Nameservers are DNS servers that translate domain names to IP addresses.',
                     ),
               );
             },
@@ -227,7 +231,7 @@ class DomainSettingsPage extends StatelessWidget {
                         onPressed: () {
                           Get.to(
                             () => EditNameserversPage(
-                              domainName: domain.name,
+                              domainName: domain.domainName,
                               currentNameservers: domain.nameservers,
                             ),
                           );
@@ -269,7 +273,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Private Nameservers',
                       initialQuestion: 'What is a private nameserver?',
                       domainContext:
-                          'Domain: ${domain.name}. Private nameservers are custom DNS servers that you control.',
+                          'Domain: ${domain.domainName}. Private nameservers are custom DNS servers that you control.',
                     ),
               );
             },
@@ -343,7 +347,7 @@ class DomainSettingsPage extends StatelessWidget {
                         onPressed: () {
                           Get.to(
                             () => RegisterNameserversPage(
-                              domainName: domain.name,
+                              domainName: domain.domainName,
                               currentNameservers: domain.privateNameservers,
                             ),
                           );
@@ -385,7 +389,7 @@ class DomainSettingsPage extends StatelessWidget {
                       title: 'Domain Security',
                       initialQuestion: 'What is a registrar lock and EPP code?',
                       domainContext:
-                          'Domain: ${domain.name}. These are security features to protect your domain from unauthorized transfers.',
+                          'Domain: ${domain.domainName}. These are security features to protect your domain from unauthorized transfers.',
                     ),
               );
             },
@@ -449,7 +453,7 @@ class DomainSettingsPage extends StatelessWidget {
                                                 initialQuestion:
                                                     'What is a registrar lock?',
                                                 domainContext:
-                                                    'Domain: ${domain.name}. A registrar lock prevents unauthorized domain transfers.',
+                                                    'Domain: ${domain.domainName}. A registrar lock prevents unauthorized domain transfers.',
                                               ),
                                         );
                                       },
@@ -485,8 +489,9 @@ class DomainSettingsPage extends StatelessWidget {
                           Switch(
                             value: domain.registrarLock,
                             onChanged:
-                                (value) =>
-                                    controller.toggleRegistrarLock(domain.name),
+                                (value) => controller.toggleRegistrarLock(
+                                  domain.domainName,
+                                ),
                             activeColor: AppPallete.kenicRed,
                           ),
                         ],
@@ -552,7 +557,7 @@ class DomainSettingsPage extends StatelessWidget {
                                                   initialQuestion:
                                                       'What is an EPP code?',
                                                   domainContext:
-                                                      'Domain: ${domain.name}. An EPP code is an authorization code required for domain transfers.',
+                                                      'Domain: ${domain.domainName}. An EPP code is an authorization code required for domain transfers.',
                                                 ),
                                           );
                                         },

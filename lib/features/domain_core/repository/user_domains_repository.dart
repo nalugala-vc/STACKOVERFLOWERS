@@ -1,0 +1,57 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:fpdart/fpdart.dart';
+import 'package:http/http.dart' as http;
+import 'package:kenic/core/api/config.dart';
+import 'package:kenic/core/api/endpoints.dart';
+import 'package:kenic/core/utils/failure/app_failure.dart';
+import 'package:kenic/features/domain_core/models/user_domain.dart';
+
+class UserDomainsRepository {
+  // ==================== USER DOMAINS ====================
+  Future<Either<AppFailure, UserDomainsResponse>> getUserDomains() async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConfigs.appBaseUrl}${Endpoints.userDomains}'),
+        headers: headers,
+      );
+
+      debugPrint('Raw response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        return Left(AppFailure('Failed to fetch user domains'));
+      }
+
+      final dynamic responseBody = jsonDecode(response.body);
+      debugPrint('Decoded response: $responseBody');
+      debugPrint('Response type: ${responseBody.runtimeType}');
+
+      if (responseBody is! Map<String, dynamic>) {
+        debugPrint(
+          'Expected Map<String, dynamic> but got ${responseBody.runtimeType}',
+        );
+        return Left(AppFailure('Invalid response format'));
+      }
+
+      final Map<String, dynamic> resBodyMap = responseBody;
+
+      // Validate required fields
+      if (!resBodyMap.containsKey('result')) {
+        debugPrint('Missing required field: result');
+        return Left(AppFailure('Missing result information in response'));
+      }
+
+      if (!resBodyMap.containsKey('domains')) {
+        debugPrint('Missing required field: domains');
+        return Left(AppFailure('Missing domains information in response'));
+      }
+
+      final userDomainsResponse = UserDomainsResponse.fromJson(resBodyMap);
+      return Right(userDomainsResponse);
+    } catch (e) {
+      debugPrint('Error in getUserDomains: $e');
+      return Left(AppFailure(e.toString()));
+    }
+  }
+}

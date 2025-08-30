@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/spacers/spacers.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/core/utils/widgets/empty_widget.dart';
 import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 import 'package:kenic/features/domain_core/models/user_domain.dart';
 import 'package:kenic/features/domain_core/views/domain_settings_page.dart';
@@ -25,7 +26,7 @@ class _MyDomainsPageState extends State<MyDomainsPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       domainController.switchTab(_tabController.index);
     });
@@ -179,6 +180,16 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            const HeroIcon(HeroIcons.clock, size: 16),
+                            spaceW5,
+                            const Text('Pending'),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
                             const HeroIcon(
                               HeroIcons.exclamationTriangle,
                               size: 16,
@@ -198,15 +209,16 @@ class _MyDomainsPageState extends State<MyDomainsPage>
         body: TabBarView(
           controller: _tabController,
           children: [
-            _buildDomainsList(isExpired: false),
-            _buildDomainsList(isExpired: true),
+            _buildDomainsList(domainType: 'active'),
+            _buildDomainsList(domainType: 'pending'),
+            _buildDomainsList(domainType: 'expired'),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDomainsList({required bool isExpired}) {
+  Widget _buildDomainsList({required String domainType}) {
     return Obx(() {
       if (domainController.isLoading.value) {
         return const Center(
@@ -214,13 +226,23 @@ class _MyDomainsPageState extends State<MyDomainsPage>
         );
       }
 
-      final domains =
-          isExpired
-              ? domainController.expiredDomains
-              : domainController.activeDomains;
+      List<UserDomain> domains;
+      switch (domainType) {
+        case 'active':
+          domains = domainController.activeDomains;
+          break;
+        case 'pending':
+          domains = domainController.pendingDomains;
+          break;
+        case 'expired':
+          domains = domainController.expiredDomains;
+          break;
+        default:
+          domains = [];
+      }
 
       if (domains.isEmpty) {
-        return _buildEmptyState(isExpired);
+        return _buildEmptyState(domainType);
       }
 
       return RefreshIndicator(
@@ -237,45 +259,35 @@ class _MyDomainsPageState extends State<MyDomainsPage>
     });
   }
 
-  Widget _buildEmptyState(bool isExpired) {
+  Widget _buildEmptyState(String domainType) {
+    String title;
+    String description;
+
+    switch (domainType) {
+      case 'active':
+        title = 'No active domains';
+        description = 'You haven\'t registered any domains yet';
+        break;
+      case 'pending':
+        title = 'No pending domains';
+        description = 'All your domain registrations are complete';
+        break;
+      case 'expired':
+        title = 'No expired domains';
+        description = 'All your domains are active and up to date';
+        break;
+      default:
+        title = 'No domains found';
+        description = 'Start by searching for available domains';
+    }
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppPallete.kenicGrey.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-              child: HeroIcon(
-                isExpired
-                    ? HeroIcons.exclamationTriangle
-                    : HeroIcons.checkCircle,
-                size: 60,
-                color: AppPallete.greyColor,
-              ),
-            ),
-            spaceH20,
-            Inter(
-              text: isExpired ? 'No expired domains' : 'No active domains',
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              textColor: AppPallete.kenicBlack,
-            ),
-            spaceH10,
-            Inter(
-              text:
-                  isExpired
-                      ? 'All your domains are active'
-                      : 'You haven\'t registered any domains yet',
-              fontSize: 16,
-              fontWeight: FontWeight.normal,
-              textColor: AppPallete.greyColor,
-              textAlignment: TextAlign.center,
-            ),
+            EmptyWidget(title: title, description: description),
             spaceH30,
             ElevatedButton(
               onPressed: () => Get.offAllNamed('/search'),
@@ -355,7 +367,7 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                       spaceW10,
                       Expanded(
                         child: Inter(
-                          text: domain.name,
+                          text: domain.domainName,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           textColor: AppPallete.kenicBlack,
@@ -367,30 +379,25 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color:
-                              domain.isExpired
-                                  ? Colors.red.withOpacity(0.1)
-                                  : Colors.green.withOpacity(0.1),
+                          color: _getStatusColor(
+                            domain.status,
+                          ).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            HeroIcon(
-                              domain.isExpired
-                                  ? HeroIcons.exclamationTriangle
-                                  : HeroIcons.checkCircle,
+                            Icon(
+                              _getStatusIcon(domain.status),
                               size: 14,
-                              color:
-                                  domain.isExpired ? Colors.red : Colors.green,
+                              color: _getStatusColor(domain.status),
                             ),
                             spaceW5,
                             Inter(
-                              text: domain.isExpired ? 'Expired' : 'Active',
+                              text: domain.status,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              textColor:
-                                  domain.isExpired ? Colors.red : Colors.green,
+                              textColor: _getStatusColor(domain.status),
                             ),
                           ],
                         ),
@@ -398,6 +405,37 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                     ],
                   ),
                   spaceH12,
+
+                  // Registrar information
+                  if (domain.registrar.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicRed.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const HeroIcon(
+                            HeroIcons.buildingOffice,
+                            size: 16,
+                            color: AppPallete.kenicRed,
+                          ),
+                          spaceW8,
+                          Expanded(
+                            child: Inter(
+                              text: 'Registrar: ${domain.registrar}',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              textColor: AppPallete.kenicBlack,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    spaceH12,
+                  ],
+
                   // Dates and info
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -409,19 +447,28 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                       children: [
                         _buildInfoRow(
                           'Purchased',
-                          DateFormat(
-                            'MMM dd, yyyy',
-                          ).format(domain.purchaseDate),
+                          DateFormat('MMM dd, yyyy').format(domain.regDate),
                         ),
                         const Divider(height: 16),
                         _buildInfoRow(
-                          'Expires',
-                          DateFormat('MMM dd, yyyy').format(domain.expiryDate),
-                          valueColor: domain.isExpired ? Colors.red : null,
+                          'Next Due',
+                          DateFormat('MMM dd, yyyy').format(domain.nextDueDate),
+                          valueColor: _getNextDueDateColor(domain.nextDueDate),
                         ),
+                        if (domain.expiryDate != null) ...[
+                          const Divider(height: 16),
+                          _buildInfoRow(
+                            'Expires',
+                            DateFormat(
+                              'MMM dd, yyyy',
+                            ).format(domain.expiryDate!),
+                            valueColor: domain.isExpired ? Colors.red : null,
+                          ),
+                        ],
                       ],
                     ),
                   ),
+
                   if (domain.isExpired) ...[
                     spaceH12,
                     SizedBox(
@@ -433,7 +480,7 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                             arguments: {
                               'amount': domain.renewalPrice,
                               'isRenewal': true,
-                              'domain': domain.name,
+                              'domain': domain.domainName,
                             },
                           );
                         },
@@ -461,6 +508,35 @@ class _MyDomainsPageState extends State<MyDomainsPage>
     );
   }
 
+  Widget _buildFeatureChip(String label, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppPallete.kenicRed.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: AppPallete.kenicRed.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: AppPallete.kenicRed),
+          spaceW8,
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppPallete.kenicRed,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoRow(String label, String value, {Color? valueColor}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -474,5 +550,44 @@ class _MyDomainsPageState extends State<MyDomainsPage>
         ),
       ],
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'expired':
+        return Colors.red;
+      default:
+        return AppPallete.greyColor;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Icons.check_circle;
+      case 'pending':
+        return Icons.access_time;
+      case 'expired':
+        return Icons.warning;
+      default:
+        return Icons.help;
+    }
+  }
+
+  Color _getNextDueDateColor(DateTime nextDueDate) {
+    final now = DateTime.now();
+    final difference = nextDueDate.difference(now).inDays;
+
+    if (difference < 0) {
+      return Colors.red; // Overdue
+    } else if (difference <= 30) {
+      return Colors.orange; // Due soon
+    } else {
+      return Colors.green; // Not due soon
+    }
   }
 }
