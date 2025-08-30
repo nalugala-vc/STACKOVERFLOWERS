@@ -7,6 +7,7 @@ import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/core/utils/widgets/empty_widget.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
+import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 import 'package:kenic/features/domain_core/models/cart.dart';
 
 class CartCheckout extends StatefulWidget {
@@ -18,6 +19,14 @@ class CartCheckout extends StatefulWidget {
 
 class _CartCheckoutState extends State<CartCheckout> {
   final cartController = Get.find<CartController>();
+  final domainController = Get.find<DomainController>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch user details when page loads
+    domainController.fetchWhmcsUserDetails();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,6 +73,18 @@ class _CartCheckoutState extends State<CartCheckout> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Profile Completion Check
+                _buildProfileCompletionCheck(),
+                // Only add spacing if the profile widget is shown
+                Obx(() {
+                  final userDetails = domainController.whmcsUserDetails.value;
+                  final isLoading = domainController.isLoadingUserDetails.value;
+                  final showWidget =
+                      isLoading ||
+                      userDetails == null ||
+                      !userDetails.isComplete;
+                  return showWidget ? spaceH20 : const SizedBox.shrink();
+                }),
                 // Cart Items
                 _buildCartItems(),
                 spaceH30,
@@ -105,6 +126,197 @@ class _CartCheckoutState extends State<CartCheckout> {
         ),
       ),
     );
+  }
+
+  Widget _buildProfileCompletionCheck() {
+    return Obx(() {
+      final userDetails = domainController.whmcsUserDetails.value;
+      final isLoading = domainController.isLoadingUserDetails.value;
+
+      // If loading, show loading indicator
+      if (isLoading) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppPallete.kenicWhite,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(color: AppPallete.kenicRed),
+          ),
+        );
+      }
+
+      // If user details are null, show unknown status
+      if (userDetails == null) {
+        return Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppPallete.kenicWhite,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const HeroIcon(
+                    HeroIcons.exclamationTriangle,
+                    size: 20,
+                    color: Colors.orange,
+                  ),
+                  spaceW10,
+                  Inter(
+                    text: 'Profile Status Unknown',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    textAlignment: TextAlign.left,
+                  ),
+                ],
+              ),
+              spaceH10,
+              Inter(
+                text:
+                    'Unable to verify your profile status. Please complete your profile to continue.',
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+                textColor: AppPallete.greyColor,
+                textAlignment: TextAlign.left,
+              ),
+              spaceH10,
+              RoundedButton(
+                onPressed: () => Get.toNamed('/profile'),
+                label: 'Complete Profile',
+                fontsize: 16,
+                width: double.infinity,
+              ),
+            ],
+          ),
+        );
+      }
+
+      final isComplete = userDetails.isComplete;
+
+      // If profile is complete, don't show the widget at all
+      if (isComplete) {
+        return const SizedBox.shrink();
+      }
+
+      // Only show the widget if profile is incomplete
+      final missingFields = userDetails.missingFields;
+
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: AppPallete.kenicWhite,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: AppPallete.kenicRed.withOpacity(0.3),
+            width: 2,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const HeroIcon(
+                  HeroIcons.exclamationTriangle,
+                  size: 20,
+                  color: Colors.orange,
+                ),
+                spaceW10,
+                Inter(
+                  text: 'Profile Incomplete',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  textAlignment: TextAlign.left,
+                  textColor: Colors.orange,
+                ),
+              ],
+            ),
+            spaceH10,
+            Inter(
+              text:
+                  'Please complete the following fields before placing an order:',
+              fontSize: 14,
+              fontWeight: FontWeight.normal,
+              textColor: AppPallete.greyColor,
+              textAlignment: TextAlign.left,
+            ),
+            spaceH10,
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children:
+                  missingFields
+                      .take(6)
+                      .map(
+                        (field) => Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppPallete.kenicRed.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppPallete.kenicRed.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Inter(
+                            text: field,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            textColor: AppPallete.kenicRed,
+                          ),
+                        ),
+                      )
+                      .toList(),
+            ),
+            if (missingFields.length > 6)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Inter(
+                  text: '... and ${missingFields.length - 6} more',
+                  fontSize: 12,
+                  fontWeight: FontWeight.normal,
+                  textColor: AppPallete.greyColor,
+                ),
+              ),
+            spaceH10,
+            RoundedButton(
+              onPressed: () => Get.toNamed('/profile'),
+              label: 'Complete Profile',
+              fontsize: 16,
+              width: double.infinity,
+              backgroundColor: AppPallete.kenicRed,
+            ),
+          ],
+        ),
+      );
+    });
   }
 
   Widget _buildCartItems() {

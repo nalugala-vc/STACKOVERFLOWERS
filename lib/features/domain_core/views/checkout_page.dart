@@ -8,6 +8,7 @@ import 'package:kenic/core/utils/widgets/auth_field.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/domain_core/controllers/cart_controller.dart';
 import 'package:kenic/features/domain_core/models/order.dart';
+import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 
 class CheckoutPage extends StatefulWidget {
   const CheckoutPage({super.key});
@@ -706,6 +707,42 @@ class _CheckoutPageState extends State<CheckoutPage> {
   }
 
   Future<void> _processPayment() async {
+    // Check if user details are complete before allowing payment
+    final domainController = Get.find<DomainController>();
+    final userDetails = await domainController.fetchWhmcsUserDetails();
+
+    if (userDetails == null) {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch user details. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+      return;
+    }
+
+    if (!userDetails.isComplete) {
+      final missingFields = userDetails.missingFields;
+      Get.snackbar(
+        'Incomplete Profile',
+        'Please complete your profile before making payment. Missing: ${missingFields.take(3).join(', ')}${missingFields.length > 3 ? '...' : ''}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade100,
+        colorText: Colors.orange.shade900,
+        duration: const Duration(seconds: 5),
+        mainButton: TextButton(
+          onPressed: () {
+            Get.toNamed(
+              '/profile',
+            ); // Navigate to profile page to complete details
+          },
+          child: const Text('Complete Profile'),
+        ),
+      );
+      return;
+    }
+
     // Validate payment details
     if (!_validatePaymentDetails()) return;
 

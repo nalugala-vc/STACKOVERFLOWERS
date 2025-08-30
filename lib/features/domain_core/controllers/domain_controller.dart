@@ -162,6 +162,56 @@ class DomainController extends GetxController {
     return domainEppCodes[domainId];
   }
 
+  // ==================== WHMCS USER DETAILS ====================
+  final Rx<WhmcsUserDetails?> whmcsUserDetails = Rx<WhmcsUserDetails?>(null);
+  final RxBool isLoadingUserDetails = false.obs;
+
+  Future<WhmcsUserDetails?> fetchWhmcsUserDetails() async {
+    if (whmcsUserDetails.value != null) {
+      return whmcsUserDetails.value; // Return cached value
+    }
+
+    isLoadingUserDetails.value = true;
+
+    try {
+      final result = await _repository.getWhmcsUserDetails();
+
+      return result.fold(
+        (failure) {
+          Get.snackbar(
+            'Error',
+            failure.message,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return null;
+        },
+        (response) {
+          whmcsUserDetails.value = response;
+          return response;
+        },
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch user details',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return null;
+    } finally {
+      isLoadingUserDetails.value = false;
+    }
+  }
+
+  // Check if user details are complete
+  bool get areUserDetailsComplete {
+    return whmcsUserDetails.value?.isComplete ?? false;
+  }
+
+  // Get missing fields for user feedback
+  List<String> get missingUserDetailsFields {
+    return whmcsUserDetails.value?.missingFields ?? [];
+  }
+
   // ==================== UPDATE NAMESERVERS ====================
   Future<bool> updateDomainNameservers({
     required int domainId,

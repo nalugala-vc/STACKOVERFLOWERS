@@ -10,6 +10,7 @@ import 'package:kenic/features/domain_core/models/order.dart';
 import 'package:kenic/features/domain_core/repository/cart_repository.dart';
 import 'package:kenic/features/domain_core/repository/order_repository.dart';
 import 'package:kenic/features/domain_core/utils/domain_converter.dart';
+import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 
 class CartController extends BaseController {
   static CartController get instance => Get.find();
@@ -628,6 +629,42 @@ class CartController extends BaseController {
         'Empty Cart',
         'Please add domains to your cart before creating an order.',
         snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    // Check if user details are complete before creating order
+    final domainController = Get.find<DomainController>();
+    final userDetails = await domainController.fetchWhmcsUserDetails();
+
+    if (userDetails == null) {
+      Get.snackbar(
+        'Error',
+        'Failed to fetch user details. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+      return;
+    }
+
+    if (!userDetails.isComplete) {
+      final missingFields = userDetails.missingFields;
+      Get.snackbar(
+        'Incomplete Profile',
+        'Please complete your profile before placing an order. Missing: ${missingFields.take(3).join(', ')}${missingFields.length > 3 ? '...' : ''}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade100,
+        colorText: Colors.orange.shade900,
+        duration: const Duration(seconds: 5),
+        mainButton: TextButton(
+          onPressed: () {
+            Get.toNamed(
+              '/profile',
+            ); // Navigate to profile page to complete details
+          },
+          child: const Text('Complete Profile'),
+        ),
       );
       return;
     }

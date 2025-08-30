@@ -7,6 +7,7 @@ class Endpoints {
   static const String changePassword = '/api/password/change';
   static const String deleteUser = '/api/user/delete';
   static const String updateUserDetails = '/api/user/details';
+  static const String userWhmcsDetails = '/api/user/whmcs-details';
 
   //Domain
   static const String domainSearch = '/api/domains/search';

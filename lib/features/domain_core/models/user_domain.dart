@@ -343,3 +343,146 @@ class NameserverUpdateRequest {
     return servers;
   }
 }
+
+// WHMCS User Details Model
+class WhmcsUserDetails {
+  final String firstName;
+  final String lastName;
+  final String email;
+  final String address1;
+  final String city;
+  final String fullState;
+  final String state;
+  final String postcode;
+  final String countryCode;
+  final String country;
+  final String phoneNumber;
+
+  WhmcsUserDetails({
+    required this.firstName,
+    required this.lastName,
+    required this.email,
+    required this.address1,
+    required this.city,
+    required this.fullState,
+    required this.state,
+    required this.postcode,
+    required this.countryCode,
+    required this.country,
+    required this.phoneNumber,
+  });
+
+  factory WhmcsUserDetails.fromJson(Map<String, dynamic> json) {
+    // Debug logging
+    print('=== WHMCS User Details Debug ===');
+    print('Raw JSON: $json');
+
+    // The API response has the user details nested inside 'whmcs_details'
+    final whmcsDetails = json['whmcs_details'] as Map<String, dynamic>?;
+    print('WHMCS Details: $whmcsDetails');
+
+    if (whmcsDetails != null) {
+      final userDetails = WhmcsUserDetails(
+        firstName: whmcsDetails['firstname'] ?? '',
+        lastName: whmcsDetails['lastname'] ?? '',
+        email: whmcsDetails['email'] ?? '',
+        address1: whmcsDetails['address1'] ?? '',
+        city: whmcsDetails['city'] ?? '',
+        fullState: whmcsDetails['fullstate'] ?? '',
+        state: whmcsDetails['state'] ?? '',
+        postcode: whmcsDetails['postcode'] ?? '',
+        countryCode: whmcsDetails['countrycode'] ?? '',
+        country: whmcsDetails['countryname'] ?? '',
+        phoneNumber: whmcsDetails['phonenumberformatted'] ?? '',
+      );
+
+      print('Parsed User Details:');
+      print('firstName: "${userDetails.firstName}"');
+      print('lastName: "${userDetails.lastName}"');
+      print('email: "${userDetails.email}"');
+      print('address1: "${userDetails.address1}"');
+      print('city: "${userDetails.city}"');
+      print('fullState: "${userDetails.fullState}"');
+      print('state: "${userDetails.state}"');
+      print('postcode: "${userDetails.postcode}"');
+      print('countryCode: "${userDetails.countryCode}"');
+      print('country: "${userDetails.country}"');
+      print('phoneNumber: "${userDetails.phoneNumber}"');
+      print('isComplete: ${userDetails.isComplete}');
+      print('missingFields: ${userDetails.missingFields}');
+      print('=== End Debug ===');
+
+      return userDetails;
+    }
+
+    // Fallback to direct field access if whmcs_details is not present
+    final fallbackDetails = WhmcsUserDetails(
+      firstName: json['firstname'] ?? '',
+      lastName: json['lastname'] ?? '',
+      email: json['email'] ?? '',
+      address1: json['address1'] ?? '',
+      city: json['city'] ?? '',
+      fullState: json['fullstate'] ?? '',
+      state: json['state'] ?? '',
+      postcode: json['postcode'] ?? '',
+      countryCode: json['countrycode'] ?? '',
+      country: json['country'] ?? json['countryname'] ?? '',
+      phoneNumber: json['phonenumber'] ?? json['phonenumberformatted'] ?? '',
+    );
+
+    print('Fallback User Details:');
+    print('isComplete: ${fallbackDetails.isComplete}');
+    print('missingFields: ${fallbackDetails.missingFields}');
+    print('=== End Debug ===');
+
+    return fallbackDetails;
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'firstname': firstName,
+      'lastname': lastName,
+      'email': email,
+      'address1': address1,
+      'city': city,
+      'fullstate': fullState,
+      'state': state,
+      'postcode': postcode,
+      'countrycode': countryCode,
+      'country': country,
+      'phonenumber': phoneNumber,
+    };
+  }
+
+  // Check if all required fields are filled
+  bool get isComplete {
+    return firstName.isNotEmpty &&
+        lastName.isNotEmpty &&
+        email.isNotEmpty &&
+        address1.isNotEmpty &&
+        city.isNotEmpty &&
+        fullState.isNotEmpty &&
+        state.isNotEmpty &&
+        postcode.isNotEmpty &&
+        countryCode.isNotEmpty &&
+        country.isNotEmpty &&
+        phoneNumber.isNotEmpty;
+  }
+
+  // Get list of missing fields
+  List<String> get missingFields {
+    final List<String> missing = [];
+    if (firstName.isEmpty) missing.add('First Name');
+    if (lastName.isEmpty) missing.add('Last Name');
+    if (email.isEmpty) missing.add('Email');
+    if (address1.isEmpty) missing.add('Address');
+    if (city.isEmpty) missing.add('City');
+    if (fullState.isEmpty) missing.add('State');
+    if (state.isEmpty) missing.add('State');
+    if (postcode.isEmpty) missing.add('Postal Code');
+    if (countryCode.isEmpty) missing.add('Country Code');
+    if (country.isEmpty) missing.add('Country');
+    if (phoneNumber.isEmpty) missing.add('Phone Number');
+    return missing;
+  }
+}

@@ -152,4 +152,39 @@ class UserDomainsRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  // ==================== WHMCS USER DETAILS ====================
+  Future<Either<AppFailure, WhmcsUserDetails>> getWhmcsUserDetails() async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final response = await http.get(
+        Uri.parse('${AppConfigs.appBaseUrl}${Endpoints.userWhmcsDetails}'),
+        headers: headers,
+      );
+
+      debugPrint('WHMCS user details response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        return Left(AppFailure('Failed to fetch user details'));
+      }
+
+      final dynamic responseBody = jsonDecode(response.body);
+
+      if (responseBody is! Map<String, dynamic>) {
+        return Left(AppFailure('Invalid user details response format'));
+      }
+
+      // Extract the 'data' field from the response
+      final dataField = responseBody['data'] as Map<String, dynamic>?;
+      if (dataField == null) {
+        return Left(AppFailure('No data field in user details response'));
+      }
+
+      final userDetails = WhmcsUserDetails.fromJson(dataField);
+      return Right(userDetails);
+    } catch (e) {
+      debugPrint('Error in getWhmcsUserDetails: $e');
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }
