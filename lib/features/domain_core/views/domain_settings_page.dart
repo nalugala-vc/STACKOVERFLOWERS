@@ -10,6 +10,7 @@ import 'package:kenic/features/domain_core/models/user_domain.dart';
 import 'package:kenic/features/domain_core/views/edit_nameservers_page.dart';
 import 'package:kenic/features/domain_core/views/register_nameservers_page.dart';
 import 'package:kenic/core/utils/widgets/custom_dialogs.dart';
+import 'package:kenic/core/utils/widgets/ai_info_bottom_sheet.dart';
 
 class DomainSettingsPage extends StatelessWidget {
   final UserDomain domain;
@@ -164,6 +165,21 @@ class DomainSettingsPage extends StatelessWidget {
           _buildSection(
             title: 'Nameservers',
             icon: HeroIcons.serverStack,
+            showInfoIcon: true,
+            onInfoTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder:
+                    (context) => AIInfoBottomSheet(
+                      title: 'Nameservers',
+                      initialQuestion: 'What is a nameserver?',
+                      domainContext:
+                          'Domain: ${domain.name}. Nameservers are DNS servers that translate domain names to IP addresses.',
+                    ),
+              );
+            },
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
@@ -242,6 +258,21 @@ class DomainSettingsPage extends StatelessWidget {
           _buildSection(
             title: 'Private Nameservers',
             icon: HeroIcons.lockClosed,
+            showInfoIcon: true,
+            onInfoTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder:
+                    (context) => AIInfoBottomSheet(
+                      title: 'Private Nameservers',
+                      initialQuestion: 'What is a private nameserver?',
+                      domainContext:
+                          'Domain: ${domain.name}. Private nameservers are custom DNS servers that you control.',
+                    ),
+              );
+            },
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
@@ -343,6 +374,21 @@ class DomainSettingsPage extends StatelessWidget {
           _buildSection(
             title: 'Security',
             icon: HeroIcons.shieldCheck,
+            showInfoIcon: true,
+            onInfoTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder:
+                    (context) => AIInfoBottomSheet(
+                      title: 'Domain Security',
+                      initialQuestion: 'What is a registrar lock and EPP code?',
+                      domainContext:
+                          'Domain: ${domain.name}. These are security features to protect your domain from unauthorized transfers.',
+                    ),
+              );
+            },
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
@@ -381,12 +427,50 @@ class DomainSettingsPage extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Inter(
-                                  text: 'Registrar Lock',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  textAlignment: TextAlign.left,
-                                  textColor: AppPallete.kenicBlack,
+                                Row(
+                                  children: [
+                                    Inter(
+                                      text: 'Registrar Lock',
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      textAlignment: TextAlign.left,
+                                      textColor: AppPallete.kenicBlack,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () {
+                                        showModalBottomSheet(
+                                          context: context,
+                                          isScrollControlled: true,
+                                          backgroundColor: Colors.transparent,
+                                          builder:
+                                              (context) => AIInfoBottomSheet(
+                                                title: 'Registrar Lock',
+                                                initialQuestion:
+                                                    'What is a registrar lock?',
+                                                domainContext:
+                                                    'Domain: ${domain.name}. A registrar lock prevents unauthorized domain transfers.',
+                                              ),
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(4),
+                                        decoration: BoxDecoration(
+                                          color: AppPallete.kenicRed
+                                              .withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: const HeroIcon(
+                                          HeroIcons.informationCircle,
+                                          size: 14,
+                                          color: AppPallete.kenicRed,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 Inter(
                                   text: 'Prevent unauthorized domain transfers',
@@ -447,11 +531,49 @@ class DomainSettingsPage extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Inter(
-                                    text: 'EPP Code',
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    textColor: AppPallete.kenicBlack,
+                                  Row(
+                                    children: [
+                                      Inter(
+                                        text: 'EPP Code',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        textColor: AppPallete.kenicBlack,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      InkWell(
+                                        onTap: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor: Colors.transparent,
+                                            builder:
+                                                (context) => AIInfoBottomSheet(
+                                                  title: 'EPP Code',
+                                                  initialQuestion:
+                                                      'What is an EPP code?',
+                                                  domainContext:
+                                                      'Domain: ${domain.name}. An EPP code is an authorization code required for domain transfers.',
+                                                ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(12),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(4),
+                                          decoration: BoxDecoration(
+                                            color: AppPallete.kenicRed
+                                                .withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: const HeroIcon(
+                                            HeroIcons.informationCircle,
+                                            size: 14,
+                                            color: AppPallete.kenicRed,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   Inter(
                                     text:
@@ -489,6 +611,8 @@ class DomainSettingsPage extends StatelessWidget {
     required String title,
     required HeroIcons icon,
     required List<Widget> children,
+    bool showInfoIcon = false,
+    VoidCallback? onInfoTap,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -512,13 +636,32 @@ class DomainSettingsPage extends StatelessWidget {
                   child: HeroIcon(icon, size: 16, color: AppPallete.kenicRed),
                 ),
                 spaceW10,
-                Inter(
-                  text: title,
-                  fontSize: 18,
-                  textAlignment: TextAlign.left,
-                  fontWeight: FontWeight.w600,
-                  textColor: AppPallete.kenicBlack,
+                Expanded(
+                  child: Inter(
+                    text: title,
+                    fontSize: 18,
+                    textAlignment: TextAlign.left,
+                    fontWeight: FontWeight.w600,
+                    textColor: AppPallete.kenicBlack,
+                  ),
                 ),
+                if (showInfoIcon && onInfoTap != null)
+                  InkWell(
+                    onTap: onInfoTap,
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const HeroIcon(
+                        HeroIcons.informationCircle,
+                        size: 18,
+                        color: AppPallete.kenicRed,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
