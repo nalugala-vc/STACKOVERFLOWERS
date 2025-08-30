@@ -261,7 +261,7 @@ class NameserversData {
 
   factory NameserversData.fromJson(Map<String, dynamic> json) {
     return NameserversData(
-      domainId: json['domainid'] ?? '',
+      domainId: json['domainid']?.toString() ?? '',
       nameservers: List<String>.from(json['nameservers'] ?? []),
       count: json['count'] ?? 0,
     );
@@ -294,5 +294,52 @@ class EppCodeResponse {
 
   Map<String, dynamic> toJson() {
     return {'success': success, 'message': message, 'data': data};
+  }
+}
+
+// Nameserver Update Request Model
+class NameserverUpdateRequest {
+  final int domainId;
+  final String? ns1;
+  final String? ns2;
+  final String? ns3;
+  final String? ns4;
+  final String? ns5;
+
+  NameserverUpdateRequest({
+    required this.domainId,
+    required this.ns1,
+    required this.ns2,
+    this.ns3,
+    this.ns4,
+    this.ns5,
+  });
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = {'domainid': domainId};
+
+    if (ns1 != null && ns1!.isNotEmpty) data['ns1'] = ns1;
+    if (ns2 != null && ns2!.isNotEmpty) data['ns2'] = ns2;
+    if (ns3 != null && ns3!.isNotEmpty) data['ns3'] = ns3;
+    if (ns4 != null && ns4!.isNotEmpty) data['ns4'] = ns4;
+    if (ns5 != null && ns5!.isNotEmpty) data['ns5'] = ns5;
+
+    return data;
+  }
+
+  // Validate that required nameservers are provided
+  bool get isValid {
+    return ns1 != null && ns1!.isNotEmpty && ns2 != null && ns2!.isNotEmpty;
+  }
+
+  // Get all non-empty nameservers
+  List<String> get allNameservers {
+    final List<String> servers = [];
+    if (ns1 != null && ns1!.isNotEmpty) servers.add(ns1!);
+    if (ns2 != null && ns2!.isNotEmpty) servers.add(ns2!);
+    if (ns3 != null && ns3!.isNotEmpty) servers.add(ns3!);
+    if (ns4 != null && ns4!.isNotEmpty) servers.add(ns4!);
+    if (ns5 != null && ns5!.isNotEmpty) servers.add(ns5!);
+    return servers;
   }
 }

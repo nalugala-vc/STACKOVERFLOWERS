@@ -120,4 +120,36 @@ class UserDomainsRepository {
       return Left(AppFailure(e.toString()));
     }
   }
+
+  // ==================== UPDATE DOMAIN NAMESERVERS ====================
+  Future<Either<AppFailure, NameserversResponse>> updateDomainNameservers({
+    required NameserverUpdateRequest request,
+  }) async {
+    try {
+      final headers = await AppConfigs.authorizedHeaders();
+      final response = await http.post(
+        Uri.parse('${AppConfigs.appBaseUrl}${Endpoints.domainNameservers}'),
+        headers: headers,
+        body: jsonEncode(request.toJson()),
+      );
+
+      debugPrint('Update nameservers response: ${response.body}');
+
+      if (response.statusCode != 200) {
+        return Left(AppFailure('Failed to update domain nameservers'));
+      }
+
+      final dynamic responseBody = jsonDecode(response.body);
+
+      if (responseBody is! Map<String, dynamic>) {
+        return Left(AppFailure('Invalid update nameservers response format'));
+      }
+
+      final nameserversResponse = NameserversResponse.fromJson(responseBody);
+      return Right(nameserversResponse);
+    } catch (e) {
+      debugPrint('Error in updateDomainNameservers: $e');
+      return Left(AppFailure(e.toString()));
+    }
+  }
 }

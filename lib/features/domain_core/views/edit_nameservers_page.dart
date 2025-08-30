@@ -8,11 +8,13 @@ import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 
 class EditNameserversPage extends StatefulWidget {
   final String domainName;
+  final int domainId;
   final List<String> currentNameservers;
 
   const EditNameserversPage({
     super.key,
     required this.domainName,
+    required this.domainId,
     required this.currentNameservers,
   });
 
@@ -27,6 +29,7 @@ class _EditNameserversPageState extends State<EditNameserversPage> {
   final defaultNameservers = ['ns1.kenic.com', 'ns2.kenic.com'];
   final spaceW12 = const SizedBox(width: 12);
   final spaceH16 = const SizedBox(height: 16);
+  bool isSaving = false;
 
   @override
   void initState() {
@@ -62,30 +65,65 @@ class _EditNameserversPageState extends State<EditNameserversPage> {
     super.dispose();
   }
 
-  void _saveNameservers() {
-    final List<String> nameservers;
-    if (useCustomNameservers) {
-      nameservers =
-          nameserverControllers
-              .map((c) => c.text.trim())
-              .where((text) => text.isNotEmpty)
-              .toList();
-      if (nameservers.isEmpty) {
+  Future<void> _saveNameservers() async {
+    if (isSaving) return;
+
+    setState(() {
+      isSaving = true;
+    });
+
+    try {
+      final List<String> nameservers;
+      if (useCustomNameservers) {
+        nameservers =
+            nameserverControllers
+                .map((c) => c.text.trim())
+                .where((text) => text.isNotEmpty)
+                .toList();
+        if (nameservers.length < 2) {
+          Get.snackbar(
+            'Error',
+            'At least NS1 and NS2 are required',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return;
+        }
+      } else {
+        nameservers = defaultNameservers;
+      }
+
+      // Use the new API method
+      final success = await controller.updateDomainNameservers(
+        domainId: widget.domainId,
+        ns1: nameservers[0],
+        ns2: nameservers[1],
+        ns3: nameservers.length > 2 ? nameservers[2] : null,
+        ns4: nameservers.length > 3 ? nameservers[3] : null,
+        ns5: nameservers.length > 4 ? nameservers[4] : null,
+      );
+
+      if (success) {
+        // Show success message in the UI
         Get.snackbar(
-          'Error',
-          'Please add at least one nameserver',
-          backgroundColor: Colors.red,
+          'Success',
+          'Nameservers updated successfully',
+          backgroundColor: Colors.green,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 2),
         );
-        return;
-      }
-    } else {
-      nameservers = defaultNameservers;
-    }
 
-    controller.updateNameservers(widget.domainName, nameservers);
-    Get.back();
+        // Close the page after showing success message
+        await Future.delayed(const Duration(milliseconds: 500));
+        Get.back();
+      }
+    } finally {
+      setState(() {
+        isSaving = false;
+      });
+    }
   }
 
   @override
@@ -354,7 +392,7 @@ class _EditNameserversPageState extends State<EditNameserversPage> {
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _saveNameservers,
+                onPressed: isSaving ? null : _saveNameservers,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppPallete.kenicRed,
                   foregroundColor: Colors.white,
@@ -364,12 +402,22 @@ class _EditNameserversPageState extends State<EditNameserversPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Inter(
-                  text: 'Save Changes',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  textColor: Colors.white,
-                ),
+                child:
+                    isSaving
+                        ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                        : Inter(
+                          text: 'Save Changes',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          textColor: Colors.white,
+                        ),
               ),
             ),
           ),

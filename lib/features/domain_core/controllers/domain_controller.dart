@@ -162,6 +162,78 @@ class DomainController extends GetxController {
     return domainEppCodes[domainId];
   }
 
+  // ==================== UPDATE NAMESERVERS ====================
+  Future<bool> updateDomainNameservers({
+    required int domainId,
+    required String ns1,
+    required String ns2,
+    String? ns3,
+    String? ns4,
+    String? ns5,
+  }) async {
+    try {
+      final request = NameserverUpdateRequest(
+        domainId: domainId,
+        ns1: ns1,
+        ns2: ns2,
+        ns3: ns3,
+        ns4: ns4,
+        ns5: ns5,
+      );
+
+      if (!request.isValid) {
+        Get.snackbar(
+          'Error',
+          'NS1 and NS2 are required',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return false;
+      }
+
+      final result = await _repository.updateDomainNameservers(
+        request: request,
+      );
+
+      return result.fold(
+        (failure) {
+          Get.snackbar(
+            'Error',
+            failure.message,
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          return false;
+        },
+        (response) {
+          if (response.success) {
+            // Update the cached nameservers
+            domainNameservers[domainId] = response.data.nameservers;
+
+            Get.snackbar(
+              'Success',
+              response.message,
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            return true;
+          } else {
+            Get.snackbar(
+              'Error',
+              response.message,
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            return false;
+          }
+        },
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to update nameservers',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return false;
+    }
+  }
+
   void toggleRegistrarLock(String domainName) {
     // In real implementation, this would make an API call
     // For now, we'll just show a success message

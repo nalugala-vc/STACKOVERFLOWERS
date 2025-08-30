@@ -284,6 +284,7 @@ class _DomainSettingsPageState extends State<DomainSettingsPage> {
                             Get.to(
                               () => EditNameserversPage(
                                 domainName: widget.domain.domainName,
+                                domainId: widget.domain.id,
                                 currentNameservers: nameservers,
                               ),
                             );
