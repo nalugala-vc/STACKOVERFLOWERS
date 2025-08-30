@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
+import 'package:kenic/features/profile/services/chat_gpt_service.dart';
 
 class AIChatPage extends StatefulWidget {
   const AIChatPage({super.key});
@@ -13,6 +14,9 @@ class AIChatPage extends StatefulWidget {
 
 class _AIChatPageState extends State<AIChatPage> {
   final TextEditingController _messageController = TextEditingController();
+  final ChatGPTService _chatGPTService = ChatGPTService();
+  bool _isLoading = false;
+
   final List<ChatMessage> _messages = [
     ChatMessage(
       text:
@@ -24,32 +28,60 @@ class _AIChatPageState extends State<AIChatPage> {
   @override
   void dispose() {
     _messageController.dispose();
+    _chatGPTService.dispose();
     super.dispose();
   }
 
-  void _handleSubmitted(String text) {
+  void _handleSubmitted(String text) async {
     if (text.trim().isEmpty) return;
 
+    final userMessage = text.trim();
     _messageController.clear();
+
     setState(() {
-      _messages.add(ChatMessage(text: text.trim(), isUser: true));
+      _messages.add(ChatMessage(text: userMessage, isUser: true));
+      _isLoading = true;
     });
 
-    // TODO: Implement actual AI response
-    // For now, just echo back after a delay
-    Future.delayed(const Duration(seconds: 1), () {
+    try {
+      // Prepare conversation history for context
+      final conversationHistory =
+          _messages
+              .where((msg) => msg.text.isNotEmpty)
+              .map(
+                (msg) => {
+                  'role': msg.isUser ? 'user' : 'assistant',
+                  'content': msg.text,
+                },
+              )
+              .toList();
+
+      // Get AI response
+      final aiResponse = await _chatGPTService.sendMessage(
+        userMessage,
+        conversationHistory,
+      );
+
+      if (mounted) {
+        setState(() {
+          _messages.add(ChatMessage(text: aiResponse, isUser: false));
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
       if (mounted) {
         setState(() {
           _messages.add(
             ChatMessage(
               text:
-                  'I understand you\'re asking about "$text". This is a placeholder response as the AI feature is still in development.',
+                  'Sorry, there was an error processing your request. Please try again.',
               isUser: false,
             ),
           );
+          _isLoading = false;
         });
       }
-    });
+    }
   }
 
   Widget _buildMessage(ChatMessage message) {
@@ -185,6 +217,73 @@ class _AIChatPageState extends State<AIChatPage> {
               childCount: _messages.length,
             ),
           ),
+          if (_isLoading)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(6),
+                        child: Image.asset('assets/ai.png'),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicWhite,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppPallete.kenicRed,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'AI is thinking...',
+                            style: TextStyle(
+                              color: AppPallete.kenicBlack,
+                              fontSize: 14,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
         ],
       ),
@@ -219,29 +318,40 @@ class _AIChatPageState extends State<AIChatPage> {
                     ),
                     child: TextField(
                       controller: _messageController,
-                      decoration: const InputDecoration(
-                        hintText: 'Type your message...',
+                      enabled: !_isLoading,
+                      decoration: InputDecoration(
+                        hintText:
+                            _isLoading
+                                ? 'AI is processing...'
+                                : 'Type your message...',
                         border: InputBorder.none,
                         hintStyle: TextStyle(color: AppPallete.greyColor),
                       ),
-                      style: const TextStyle(
-                        color: AppPallete.kenicBlack,
+                      style: TextStyle(
+                        color:
+                            _isLoading
+                                ? AppPallete.greyColor
+                                : AppPallete.kenicBlack,
                         fontSize: 14,
                       ),
                       maxLines: 4,
                       minLines: 1,
-                      onSubmitted: _handleSubmitted,
+                      onSubmitted: _isLoading ? null : _handleSubmitted,
                     ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Container(
                   decoration: BoxDecoration(
-                    color: AppPallete.kenicRed,
+                    color:
+                        _isLoading ? AppPallete.greyColor : AppPallete.kenicRed,
                     borderRadius: BorderRadius.circular(24),
                     boxShadow: [
                       BoxShadow(
-                        color: AppPallete.kenicRed.withOpacity(0.3),
+                        color: (_isLoading
+                                ? AppPallete.greyColor
+                                : AppPallete.kenicRed)
+                            .withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                       ),
@@ -250,12 +360,17 @@ class _AIChatPageState extends State<AIChatPage> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () => _handleSubmitted(_messageController.text),
+                      onTap:
+                          _isLoading
+                              ? null
+                              : () => _handleSubmitted(_messageController.text),
                       borderRadius: BorderRadius.circular(24),
                       child: Container(
                         padding: const EdgeInsets.all(12),
-                        child: const HeroIcon(
-                          HeroIcons.paperAirplane,
+                        child: HeroIcon(
+                          _isLoading
+                              ? HeroIcons.clock
+                              : HeroIcons.paperAirplane,
                           color: Colors.white,
                           size: 24,
                         ),
