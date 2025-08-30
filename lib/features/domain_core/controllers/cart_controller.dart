@@ -740,6 +740,20 @@ class CartController extends BaseController {
                   colorText: Colors.red.shade900,
                 );
               }
+            } else if (selectedPaymentMethod.value == PaymentMethod.mpesa) {
+              // For M-Pesa payments, immediately check payment status
+              final paymentRef = response.data?.paymentReference;
+              if (paymentRef != null) {
+                _startPaymentStatusPolling(paymentRef);
+              } else {
+                Get.snackbar(
+                  'Error',
+                  'Payment reference not available',
+                  snackPosition: SnackPosition.BOTTOM,
+                  backgroundColor: Colors.red.shade100,
+                  colorText: Colors.red.shade900,
+                );
+              }
             } else {
               // For other payment methods, proceed to confirmation
               _clearCartAndNavigateToConfirmation(response.data?.toJson());
