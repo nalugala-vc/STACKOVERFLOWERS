@@ -47,8 +47,7 @@ The app enables users to **search, register, and manage .KE domains seamlessly**
 
 ### Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/kenic-app.git
-cd kenic-app
+git clone [https://github.com/<your-username>/kenic-app.git](https://github.com/nalugala-vc/STACKOVERFLOWERS)
 ```
 
 ### Install Dependencies
