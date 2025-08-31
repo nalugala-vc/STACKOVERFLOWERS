@@ -199,7 +199,9 @@ class _CartCheckoutState extends State<CartCheckout> {
               ),
               spaceH10,
               RoundedButton(
-                onPressed: () => Get.toNamed('/profile'),
+                onPressed:
+                    () =>
+                        Get.offAllNamed('/main', arguments: {'initialTab': 3}),
                 label: 'Complete Profile',
                 fontsize: 16,
                 width: double.infinity,
@@ -307,7 +309,8 @@ class _CartCheckoutState extends State<CartCheckout> {
               ),
             spaceH10,
             RoundedButton(
-              onPressed: () => Get.toNamed('/profile'),
+              onPressed:
+                  () => Get.offAllNamed('/main', arguments: {'initialTab': 3}),
               label: 'Complete Profile',
               fontsize: 16,
               width: double.infinity,

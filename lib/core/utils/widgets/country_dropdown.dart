@@ -69,7 +69,7 @@ class CountryDropdown extends StatelessWidget {
                           const SizedBox(width: 12),
                           Expanded(
                             child: Inter(
-                              text: selectedCountry!,
+                              text: _getCountryName(selectedCountry!),
                               fontSize: 14,
                               textColor: AppPallete.kenicBlack,
                             ),
@@ -127,8 +127,52 @@ class CountryDropdown extends StatelessWidget {
       'IN': '🇮🇳', // India
       'BR': '🇧🇷', // Brazil
       'MX': '🇲🇽', // Mexico
+      'AF': '🇦🇫', // Afghanistan
     };
 
     return flagEmojis[countryCode] ?? '🏳️';
+  }
+
+  String _getCountryName(String countryCode) {
+    const Map<String, String> countryNames = {
+      'KE': 'Kenya',
+      'UG': 'Uganda',
+      'TZ': 'Tanzania',
+      'RW': 'Rwanda',
+      'BI': 'Burundi',
+      'SS': 'South Sudan',
+      'ET': 'Ethiopia',
+      'SO': 'Somalia',
+      'DJ': 'Djibouti',
+      'ER': 'Eritrea',
+      'ZA': 'South Africa',
+      'NG': 'Nigeria',
+      'EG': 'Egypt',
+      'GH': 'Ghana',
+      'US': 'United States',
+      'GB': 'United Kingdom',
+      'CA': 'Canada',
+      'AU': 'Australia',
+      'DE': 'Germany',
+      'FR': 'France',
+      'IT': 'Italy',
+      'ES': 'Spain',
+      'NL': 'Netherlands',
+      'BE': 'Belgium',
+      'CH': 'Switzerland',
+      'AT': 'Austria',
+      'SE': 'Sweden',
+      'NO': 'Norway',
+      'DK': 'Denmark',
+      'FI': 'Finland',
+      'JP': 'Japan',
+      'CN': 'China',
+      'IN': 'India',
+      'BR': 'Brazil',
+      'MX': 'Mexico',
+      'AF': 'Afghanistan',
+    };
+
+    return countryNames[countryCode] ?? countryCode;
   }
 }

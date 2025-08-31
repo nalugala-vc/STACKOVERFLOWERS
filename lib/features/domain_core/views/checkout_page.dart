@@ -32,6 +32,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
   bool isExistingOrder = false;
   int? existingOrderId;
 
+  // Payment processing state
+  final isPaymentProcessing = false.obs;
+  final paymentStatusMessage = ''.obs;
+
   @override
   void initState() {
     super.initState();
@@ -87,28 +91,39 @@ class _CheckoutPageState extends State<CheckoutPage> {
           );
         }
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Order Summary
-              _buildOrderSummary(),
-              spaceH30,
+        return Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Order Summary
+                  _buildOrderSummary(),
+                  spaceH30,
 
-              // Promo Code
-              _buildPromoSection(),
-              spaceH30,
+                  // Promo Code
+                  _buildPromoSection(),
+                  spaceH30,
 
-              // Payment Methods
-              _buildPaymentMethods(),
-              spaceH30,
+                  // Payment Methods
+                  _buildPaymentMethods(),
+                  spaceH30,
 
-              // Payment Details
-              _buildPaymentDetails(),
-              spaceH100,
-            ],
-          ),
+                  // Payment Details
+                  _buildPaymentDetails(),
+                  spaceH100,
+                ],
+              ),
+            ),
+            // Payment Processing Overlay
+            Obx(() {
+              if (isPaymentProcessing.value) {
+                return _buildPaymentProcessingOverlay();
+              }
+              return const SizedBox.shrink();
+            }),
+          ],
         );
       }),
       bottomNavigationBar: Obx(() {
@@ -673,6 +688,88 @@ class _CheckoutPageState extends State<CheckoutPage> {
     );
   }
 
+  Widget _buildPaymentProcessingOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(40),
+          padding: const EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            color: AppPallete.kenicWhite,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(
+                color: AppPallete.kenicRed,
+                strokeWidth: 3,
+              ),
+              spaceH20,
+              Inter(
+                text: 'Processing Payment...',
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                textColor: AppPallete.kenicBlack,
+                textAlignment: TextAlign.center,
+              ),
+              spaceH10,
+              Obx(
+                () => Inter(
+                  text:
+                      paymentStatusMessage.value.isNotEmpty
+                          ? paymentStatusMessage.value
+                          : 'Please wait while we process your payment',
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                  textColor: AppPallete.greyColor,
+                  textAlignment: TextAlign.center,
+                ),
+              ),
+              spaceH20,
+              if (cartController.selectedPaymentMethod.value ==
+                  PaymentMethod.mpesa)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppPallete.kenicGreen.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const HeroIcon(
+                        HeroIcons.informationCircle,
+                        size: 16,
+                        color: AppPallete.kenicGreen,
+                      ),
+                      spaceW8,
+                      Flexible(
+                        child: Inter(
+                          text: 'Check your phone for M-Pesa prompt',
+                          fontSize: 12,
+                          fontWeight: FontWeight.normal,
+                          textColor: AppPallete.kenicGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildSummaryRow(
     String label,
     String amount, {
@@ -746,30 +843,68 @@ class _CheckoutPageState extends State<CheckoutPage> {
     // Validate payment details
     if (!_validatePaymentDetails()) return;
 
-    switch (cartController.selectedPaymentMethod.value) {
-      case PaymentMethod.mpesa:
-        await cartController.processPayment(
-          phoneNumber: phoneController.text.trim(),
-        );
-        break;
-      case PaymentMethod.card:
-        final expiryParts = expiryController.text.split('/');
-        if (expiryParts.length != 2) {
-          Get.snackbar(
-            'Error',
-            'Invalid expiry date format. Please use MM/YY format.',
-            snackPosition: SnackPosition.BOTTOM,
-          );
-          return;
-        }
+    // Show payment processing overlay
+    isPaymentProcessing.value = true;
+    paymentStatusMessage.value = 'Initializing payment...';
 
-        await cartController.processPayment(
-          cardNumber: cardNumberController.text.trim(),
-          cvv: cvvController.text.trim(),
-          expiryMonth: expiryParts[0].trim(),
-          expiryYear: '20${expiryParts[1].trim()}',
-        );
-        break;
+    try {
+      switch (cartController.selectedPaymentMethod.value) {
+        case PaymentMethod.mpesa:
+          paymentStatusMessage.value = 'Sending M-Pesa request...';
+          await cartController.processPayment(
+            phoneNumber: phoneController.text.trim(),
+            onStatusUpdate: (status) {
+              paymentStatusMessage.value = status;
+            },
+            onPaymentComplete: () {
+              isPaymentProcessing.value = false;
+            },
+            onPaymentError: (error) {
+              isPaymentProcessing.value = false;
+              paymentStatusMessage.value = '';
+            },
+          );
+          break;
+        case PaymentMethod.card:
+          paymentStatusMessage.value = 'Processing card payment...';
+          final expiryParts = expiryController.text.split('/');
+          if (expiryParts.length != 2) {
+            Get.snackbar(
+              'Error',
+              'Invalid expiry date format. Please use MM/YY format.',
+              snackPosition: SnackPosition.BOTTOM,
+            );
+            isPaymentProcessing.value = false;
+            return;
+          }
+
+          await cartController.processPayment(
+            cardNumber: cardNumberController.text.trim(),
+            cvv: cvvController.text.trim(),
+            expiryMonth: expiryParts[0].trim(),
+            expiryYear: '20${expiryParts[1].trim()}',
+            onStatusUpdate: (status) {
+              paymentStatusMessage.value = status;
+            },
+            onPaymentComplete: () {
+              isPaymentProcessing.value = false;
+            },
+            onPaymentError: (error) {
+              isPaymentProcessing.value = false;
+              paymentStatusMessage.value = '';
+            },
+          );
+          break;
+      }
+    } catch (e) {
+      isPaymentProcessing.value = false;
+      Get.snackbar(
+        'Error',
+        'An unexpected error occurred during payment processing',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
     }
   }
 

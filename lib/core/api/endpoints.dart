@@ -24,4 +24,7 @@ class Endpoints {
 
   //Payments
   static const String payments = '/api/payments';
+
+  //Support Tickets
+  static const String tickets = '/api/tickets';
 }

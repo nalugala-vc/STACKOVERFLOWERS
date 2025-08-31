@@ -155,9 +155,11 @@ class PersonalInformationPage extends StatelessWidget {
               ),
               spaceW15,
               Expanded(
-                child: CountryDropdown(
-                  selectedCountry: controller.selectedCountry.value,
-                  onChanged: controller.setCountry,
+                child: Obx(
+                  () => CountryDropdown(
+                    selectedCountry: controller.selectedCountry.value,
+                    onChanged: controller.setCountry,
+                  ),
                 ),
               ),
             ],

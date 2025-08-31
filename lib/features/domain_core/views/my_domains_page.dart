@@ -301,7 +301,10 @@ class _MyDomainsPageState extends State<MyDomainsPage>
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              child: const Text('Search Domains'),
+              child: const Text(
+                'Search Domains',
+                style: TextStyle(color: AppPallete.kenicWhite),
+              ),
             ),
           ],
         ),

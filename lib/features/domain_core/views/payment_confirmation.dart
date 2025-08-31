@@ -43,6 +43,65 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
     _animationController.forward();
   }
 
+  // Extract domains from the order items
+  List<String> get _purchasedDomains {
+    try {
+      debugPrint('Extracting domains from receipt: $receipt');
+      final order = receipt['order'] as Map<String, dynamic>?;
+      debugPrint('Order data: $order');
+
+      if (order != null) {
+        final items = order['items'] as List<dynamic>?;
+        debugPrint('Order items: $items');
+
+        if (items != null) {
+          final domains =
+              items
+                  .map((item) => item['domain_name'] as String? ?? '')
+                  .where((domain) => domain.isNotEmpty)
+                  .toList();
+          debugPrint('Extracted domains: $domains');
+          return domains;
+        }
+      }
+      debugPrint('No domains found in receipt');
+      return [];
+    } catch (e) {
+      debugPrint('Error extracting domains: $e');
+      return [];
+    }
+  }
+
+  // Extract domain details with years
+  List<Map<String, dynamic>> get _domainDetails {
+    try {
+      final order = receipt['order'] as Map<String, dynamic>?;
+      if (order != null) {
+        final items = order['items'] as List<dynamic>?;
+        if (items != null) {
+          return items
+              .map(
+                (item) => {
+                  'domain_name': item['domain_name'] as String? ?? '',
+                  'number_of_years': item['number_of_years'] as int? ?? 1,
+                  'price': item['price'] as String? ?? '0.00',
+                  'status': item['status'] as String? ?? 'pending',
+                },
+              )
+              .where(
+                (domain) =>
+                    (domain['domain_name'] as String?)?.isNotEmpty == true,
+              )
+              .toList();
+        }
+      }
+      return [];
+    } catch (e) {
+      debugPrint('Error extracting domain details: $e');
+      return [];
+    }
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -71,9 +130,9 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
               _buildTransactionDetails(),
               spaceH30,
 
-              // Domain List
-              _buildDomainsList(),
-              spaceH40,
+              // // Domain List
+              // _buildDomainsList(),
+              // spaceH40,
 
               // Action Buttons
               _buildActionButtons(),
@@ -341,8 +400,7 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
   }
 
   Widget _buildDomainsList() {
-    // For now, we don't have domains in the payment response
-    final domains = <String>[];
+    final domainDetails = _domainDetails;
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -377,59 +435,90 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
             ],
           ),
           spaceH20,
-          ...domains.map(
-            (domain) => Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
+          if (domainDetails.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: AppPallete.kenicGrey,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppPallete.kenicGreen.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+              child: Center(
+                child: Inter(
+                  text: 'No domains found in this order',
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                  textColor: AppPallete.greyColor,
+                  textAlignment: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            ...domainDetails.map(
+              (domain) => Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppPallete.kenicGrey,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppPallete.kenicGreen.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const HeroIcon(
+                        HeroIcons.checkCircle,
+                        size: 16,
+                        color: AppPallete.kenicGreen,
+                      ),
                     ),
-                    child: const HeroIcon(
-                      HeroIcons.checkCircle,
+                    spaceW15,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Inter(
+                            text: domain['domain_name'] as String,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            textAlignment: TextAlign.left,
+                          ),
+                          spaceH5,
+                          Row(
+                            children: [
+                              Inter(
+                                text:
+                                    '${domain['number_of_years']} year${domain['number_of_years'] > 1 ? 's' : ''} registration',
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal,
+                                textColor: AppPallete.kenicGreen,
+                                textAlignment: TextAlign.left,
+                              ),
+                              spaceW10,
+                              Inter(
+                                text: 'KES ${domain['price']}',
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                textColor: AppPallete.kenicRed,
+                                textAlignment: TextAlign.left,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const HeroIcon(
+                      HeroIcons.arrowTopRightOnSquare,
                       size: 16,
-                      color: AppPallete.kenicGreen,
+                      color: AppPallete.greyColor,
                     ),
-                  ),
-                  spaceW15,
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Inter(
-                          text: domain,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          textAlignment: TextAlign.left,
-                        ),
-                        spaceH5,
-                        Inter(
-                          text: 'Active - Ready to use',
-                          fontSize: 12,
-                          fontWeight: FontWeight.normal,
-                          textColor: AppPallete.kenicGreen,
-                          textAlignment: TextAlign.left,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const HeroIcon(
-                    HeroIcons.arrowTopRightOnSquare,
-                    size: 16,
-                    color: AppPallete.greyColor,
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
@@ -482,7 +571,8 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
     return Column(
       children: [
         RoundedButton(
-          onPressed: () => Get.offAllNamed('/my-domains'),
+          onPressed:
+              () => Get.offAllNamed('/main', arguments: {'initialTab': 1}),
           label: 'Go to My Domains',
           fontsize: 16,
         ),
@@ -491,7 +581,9 @@ class _PaymentConfirmationState extends State<PaymentConfirmation>
           children: [
             Expanded(
               child: RoundedButton(
-                onPressed: () => Get.offAllNamed('/main'),
+                onPressed:
+                    () =>
+                        Get.offAllNamed('/main', arguments: {'initialTab': 0}),
                 label: 'Search More',
                 backgroundColor: AppPallete.kenicGrey,
                 textColor: AppPallete.kenicBlack,

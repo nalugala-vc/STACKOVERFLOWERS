@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/domain_core/views/home_dashboard.dart';
@@ -22,6 +23,22 @@ class _MainNavigationState extends State<MainNavigation> {
     const OrdersPage(),
     const ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Check if we have arguments to set initial tab
+    final arguments = Get.arguments;
+    if (arguments != null && arguments is Map<String, dynamic>) {
+      final initialTab = arguments['initialTab'];
+      if (initialTab != null &&
+          initialTab is int &&
+          initialTab >= 0 &&
+          initialTab < _pages.length) {
+        _selectedIndex = initialTab;
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

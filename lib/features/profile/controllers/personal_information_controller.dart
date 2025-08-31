@@ -6,6 +6,7 @@ import 'package:kenic/core/utils/failure/app_failure.dart';
 import 'package:kenic/features/onboarding/controllers/onboarding_controller.dart';
 import 'package:kenic/features/onboarding/repository/onboarding_repository.dart';
 import 'package:kenic/features/onboarding/models/models.dart';
+import 'package:kenic/features/domain_core/controllers/domain_controller.dart';
 
 class PersonalInformationController extends BaseController {
   static PersonalInformationController get instance => Get.find();
@@ -13,6 +14,9 @@ class PersonalInformationController extends BaseController {
   // Repository
   final OnboardingRepository _repository = OnboardingRepository();
   final OnboardingController _authController = Get.find<OnboardingController>();
+
+  // Lazy access to DomainController to avoid dependency issues
+  DomainController get _domainController => Get.find<DomainController>();
 
   // Form Controllers
   final firstNameController = TextEditingController();
@@ -34,12 +38,68 @@ class PersonalInformationController extends BaseController {
     _initializeFields();
   }
 
-  void _initializeFields() {
+  Future<void> _initializeFields() async {
+    // First, try to get basic user info from auth controller
     final user = _authController.currentUser.value;
     if (user != null) {
       firstNameController.text = user.firstName;
       lastNameController.text = user.lastName;
-      // Set default country to Kenya
+    }
+
+    // Then, try to fetch complete user details from WHMCS
+    await _loadWhmcsUserDetails();
+  }
+
+  Future<void> _loadWhmcsUserDetails() async {
+    try {
+      // Check if DomainController is available
+      if (!Get.isRegistered<DomainController>()) {
+        debugPrint(
+          'DomainController not registered, skipping WHMCS details loading',
+        );
+        selectedCountry.value = 'KE';
+        return;
+      }
+
+      final whmcsDetails = await _domainController.fetchWhmcsUserDetails();
+      if (whmcsDetails != null) {
+        // Prefill all available fields
+        firstNameController.text =
+            whmcsDetails.firstName.isNotEmpty
+                ? whmcsDetails.firstName
+                : firstNameController.text;
+        lastNameController.text =
+            whmcsDetails.lastName.isNotEmpty
+                ? whmcsDetails.lastName
+                : lastNameController.text;
+        address1Controller.text = whmcsDetails.address1;
+        cityController.text = whmcsDetails.city;
+        stateController.text =
+            whmcsDetails.state.isNotEmpty
+                ? whmcsDetails.state
+                : whmcsDetails.fullState;
+        postcodeController.text = whmcsDetails.postcode;
+
+        // Set country from WHMCS details, fallback to Kenya if empty
+        final countryToSet =
+            whmcsDetails.countryCode.isNotEmpty
+                ? whmcsDetails.countryCode
+                : 'KE';
+        debugPrint('Setting country from WHMCS to: $countryToSet');
+        selectedCountry.value = countryToSet;
+        debugPrint('Country after WHMCS set: ${selectedCountry.value}');
+
+        // Handle company name - check if user has existing company info
+        // Since WHMCS details don't include company info in current model,
+        // we check if any company-related fields might have data from other sources
+        // For now, we keep the toggle functionality for user input
+      } else {
+        // Set default country to Kenya if no WHMCS details
+        selectedCountry.value = 'KE';
+      }
+    } catch (e) {
+      debugPrint('Error loading WHMCS user details: $e');
+      // Set default country to Kenya if error occurs
       selectedCountry.value = 'KE';
     }
   }
@@ -52,7 +112,9 @@ class PersonalInformationController extends BaseController {
   }
 
   void setCountry(String? countryCode) {
+    debugPrint('Setting country to: $countryCode');
     selectedCountry.value = countryCode;
+    debugPrint('Country set to: ${selectedCountry.value}');
   }
 
   bool validateForm() {

@@ -526,14 +526,23 @@ class CartController extends BaseController {
     Get.offAllNamed('/payment-confirmation', arguments: paymentData);
   }
 
-  Future<void> _launchPaymentUrl(String url, String paymentReference) async {
+  Future<void> _launchPaymentUrl(
+    String url,
+    String paymentReference,
+    Function(String)? onStatusUpdate,
+    Function()? onPaymentComplete,
+  ) async {
     try {
       final uri = Uri.parse(url);
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
 
         // After launching URL, start polling for payment status
-        _startPaymentStatusPolling(paymentReference);
+        _startPaymentStatusPolling(
+          paymentReference,
+          onStatusUpdate,
+          onPaymentComplete,
+        );
       } else {
         Get.snackbar(
           'Error',
@@ -554,7 +563,11 @@ class CartController extends BaseController {
     }
   }
 
-  Future<void> _startPaymentStatusPolling(String paymentReference) async {
+  Future<void> _startPaymentStatusPolling(
+    String paymentReference,
+    Function(String)? onStatusUpdate,
+    Function()? onPaymentComplete,
+  ) async {
     // Poll every 5 seconds for 2 minutes
     const maxAttempts = 24; // 2 minutes = 24 * 5 seconds
     int attempts = 0;
@@ -569,6 +582,7 @@ class CartController extends BaseController {
       final success = result.fold((failure) => false, (response) {
         if (response.success &&
             response.data?.status.toLowerCase() == 'success') {
+          onPaymentComplete?.call();
           _clearCartAndNavigateToConfirmation(response.data?.toJson());
           return true;
         }
@@ -719,6 +733,9 @@ class CartController extends BaseController {
     String? cvv,
     String? expiryMonth,
     String? expiryYear,
+    Function(String)? onStatusUpdate,
+    Function()? onPaymentComplete,
+    Function(String)? onPaymentError,
   }) async {
     if (orderId.value == null) {
       Get.snackbar(
@@ -750,6 +767,7 @@ class CartController extends BaseController {
 
       result.fold(
         (failure) {
+          onPaymentError?.call(failure.message);
           Get.snackbar(
             'Payment Failed',
             failure.message,
@@ -767,8 +785,15 @@ class CartController extends BaseController {
               final paymentRef = response.data?.paymentReference;
 
               if (paymentUrl != null && paymentRef != null) {
-                _launchPaymentUrl(paymentUrl, paymentRef);
+                onStatusUpdate?.call('Redirecting to payment gateway...');
+                _launchPaymentUrl(
+                  paymentUrl,
+                  paymentRef,
+                  onStatusUpdate,
+                  onPaymentComplete,
+                );
               } else {
+                onPaymentError?.call('Payment URL not available');
                 Get.snackbar(
                   'Error',
                   'Payment URL not available',
@@ -781,8 +806,14 @@ class CartController extends BaseController {
               // For M-Pesa payments, immediately check payment status
               final paymentRef = response.data?.paymentReference;
               if (paymentRef != null) {
-                _startPaymentStatusPolling(paymentRef);
+                onStatusUpdate?.call('Waiting for M-Pesa confirmation...');
+                _startPaymentStatusPolling(
+                  paymentRef,
+                  onStatusUpdate,
+                  onPaymentComplete,
+                );
               } else {
+                onPaymentError?.call('Payment reference not available');
                 Get.snackbar(
                   'Error',
                   'Payment reference not available',
@@ -793,6 +824,7 @@ class CartController extends BaseController {
               }
             } else {
               // For other payment methods, proceed to confirmation
+              onPaymentComplete?.call();
               _clearCartAndNavigateToConfirmation(response.data?.toJson());
             }
           } else {

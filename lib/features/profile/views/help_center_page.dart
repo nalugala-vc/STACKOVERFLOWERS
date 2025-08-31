@@ -5,6 +5,7 @@ import 'package:kenic/core/utils/fonts/inter.dart';
 import 'package:kenic/core/utils/theme/app_pallete.dart';
 import 'package:kenic/features/profile/views/faqs_page.dart';
 import 'package:kenic/features/profile/views/ai_chat_page.dart';
+import 'package:kenic/features/support/views/support_tickets_page.dart';
 
 class HelpCenterPage extends StatelessWidget {
   const HelpCenterPage({super.key});
@@ -142,6 +143,12 @@ class HelpCenterPage extends StatelessWidget {
                 subtitle: 'Get instant help from our AI assistant',
                 icon: HeroIcons.chatBubbleBottomCenterText,
                 onTap: () => Get.to(() => const AIChatPage()),
+              ),
+              _buildHelpCard(
+                title: 'Support Tickets',
+                subtitle: 'Create and manage support tickets',
+                icon: HeroIcons.chatBubbleLeftRight,
+                onTap: () => Get.to(() => const SupportTicketsPage()),
               ),
             ],
           ),
