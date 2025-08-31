@@ -3,8 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:async';
 
 class ChatGPTService {
-  static const String _apiKey =
-      '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';
+  static const String _apiKey = '';
 
   late final OpenAI _openAI;
 
