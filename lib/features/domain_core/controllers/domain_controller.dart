@@ -166,8 +166,10 @@ class DomainController extends GetxController {
   final Rx<WhmcsUserDetails?> whmcsUserDetails = Rx<WhmcsUserDetails?>(null);
   final RxBool isLoadingUserDetails = false.obs;
 
-  Future<WhmcsUserDetails?> fetchWhmcsUserDetails() async {
-    if (whmcsUserDetails.value != null) {
+  Future<WhmcsUserDetails?> fetchWhmcsUserDetails({
+    bool forceRefresh = false,
+  }) async {
+    if (whmcsUserDetails.value != null && !forceRefresh) {
       return whmcsUserDetails.value; // Return cached value
     }
 
@@ -200,6 +202,12 @@ class DomainController extends GetxController {
     } finally {
       isLoadingUserDetails.value = false;
     }
+  }
+
+  // Method to refresh user details (clear cache and fetch fresh data)
+  Future<WhmcsUserDetails?> refreshWhmcsUserDetails() async {
+    whmcsUserDetails.value = null; // Clear cache
+    return await fetchWhmcsUserDetails(forceRefresh: true);
   }
 
   // Check if user details are complete

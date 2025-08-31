@@ -117,6 +117,15 @@ class PersonalInformationController extends BaseController {
     debugPrint('Country set to: ${selectedCountry.value}');
   }
 
+  // Method to refresh form fields with latest WHMCS user details
+  Future<void> refreshFormData() async {
+    // Force refresh to get latest data from server
+    if (Get.isRegistered<DomainController>()) {
+      await _domainController.refreshWhmcsUserDetails();
+    }
+    await _loadWhmcsUserDetails();
+  }
+
   bool validateForm() {
     errorMessage.value = '';
 
@@ -201,6 +210,13 @@ class PersonalInformationController extends BaseController {
           );
           _authController.currentUser.value = updatedUser;
         }
+
+        // Refresh WHMCS user details in DomainController to update profile completion status
+        try {
+          await _domainController.refreshWhmcsUserDetails();
+        } catch (e) {
+          debugPrint('Error refreshing WHMCS user details: $e');
+        }
       }
 
       return result;
@@ -214,13 +230,8 @@ class PersonalInformationController extends BaseController {
 
   @override
   void onClose() {
-    firstNameController.dispose();
-    lastNameController.dispose();
-    address1Controller.dispose();
-    cityController.dispose();
-    stateController.dispose();
-    companyNameController.dispose();
-    postcodeController.dispose();
+    // Don't dispose controllers since this is a persistent singleton
+    // The controllers will be disposed when the app is closed
     super.onClose();
   }
 }

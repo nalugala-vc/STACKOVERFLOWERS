@@ -8,13 +8,27 @@ import 'package:kenic/core/utils/widgets/country_dropdown.dart';
 import 'package:kenic/core/utils/widgets/rounded_button.dart';
 import 'package:kenic/features/profile/controllers/personal_information_controller.dart';
 
-class PersonalInformationPage extends StatelessWidget {
+class PersonalInformationPage extends StatefulWidget {
   const PersonalInformationPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = Get.put(PersonalInformationController());
+  State<PersonalInformationPage> createState() =>
+      _PersonalInformationPageState();
+}
 
+class _PersonalInformationPageState extends State<PersonalInformationPage> {
+  late PersonalInformationController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.find<PersonalInformationController>();
+    // Refresh form data when page is visited to ensure latest data is loaded
+    controller.refreshFormData();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPallete.kenicWhite,
       appBar: AppBar(

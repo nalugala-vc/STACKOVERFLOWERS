@@ -17,15 +17,35 @@ class CartCheckout extends StatefulWidget {
   State<CartCheckout> createState() => _CartCheckoutState();
 }
 
-class _CartCheckoutState extends State<CartCheckout> {
+class _CartCheckoutState extends State<CartCheckout>
+    with WidgetsBindingObserver {
   final cartController = Get.find<CartController>();
   final domainController = Get.find<DomainController>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Fetch user details when page loads
-    domainController.fetchWhmcsUserDetails();
+    _refreshUserDetails();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh user details when app becomes active again
+      _refreshUserDetails();
+    }
+  }
+
+  Future<void> _refreshUserDetails() async {
+    await domainController.refreshWhmcsUserDetails();
   }
 
   @override
@@ -46,7 +66,10 @@ class _CartCheckoutState extends State<CartCheckout> {
         title: Inter(text: 'Cart', fontSize: 18, fontWeight: FontWeight.w600),
         actions: [
           IconButton(
-            onPressed: () => cartController.refreshCart(),
+            onPressed: () async {
+              await cartController.refreshCart();
+              await _refreshUserDetails();
+            },
             icon: const HeroIcon(
               HeroIcons.arrowPath,
               size: 20,
@@ -67,7 +90,10 @@ class _CartCheckoutState extends State<CartCheckout> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => cartController.refreshCart(),
+          onRefresh: () async {
+            await cartController.refreshCart();
+            await _refreshUserDetails();
+          },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),
             child: Column(

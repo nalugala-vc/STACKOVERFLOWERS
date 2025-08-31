@@ -15,6 +15,6 @@ class AppBindings extends Bindings {
     Get.put(DomainController());
     Get.put(CartController());
     Get.put(DomainSearchController());
-    Get.lazyPut(() => PersonalInformationController());
+    Get.put(PersonalInformationController());
   }
 }
