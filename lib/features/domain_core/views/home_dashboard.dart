@@ -25,8 +25,8 @@ class _HomeDashboardState extends State<HomeDashboard>
   @override
   void initState() {
     super.initState();
-    searchController = Get.put(DomainSearchController());
-    cartController = Get.put(CartController());
+    searchController = Get.find<DomainSearchController>();
+    cartController = Get.find<CartController>();
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
@@ -43,8 +43,6 @@ class _HomeDashboardState extends State<HomeDashboard>
   void dispose() {
     _fadeController.dispose();
     _slideController.dispose();
-    Get.delete<DomainSearchController>();
-    Get.delete<CartController>();
     super.dispose();
   }
 

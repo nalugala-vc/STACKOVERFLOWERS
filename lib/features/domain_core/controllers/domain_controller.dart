@@ -33,8 +33,8 @@ class DomainController extends GetxController {
       result.fold(
         (failure) {
           errorMessage.value = failure.message;
-          // Fallback to dummy data for development
-          domains.value = UserDomain.getDummyDomains();
+          // Don't fall back to dummy data - show empty state instead
+          domains.value = [];
         },
         (response) {
           domains.value = response.domains;
@@ -42,8 +42,8 @@ class DomainController extends GetxController {
       );
     } catch (e) {
       errorMessage.value = 'An unexpected error occurred';
-      // Fallback to dummy data for development
-      domains.value = UserDomain.getDummyDomains();
+      // Don't fall back to dummy data - show empty state instead
+      domains.value = [];
     } finally {
       isLoading.value = false;
     }

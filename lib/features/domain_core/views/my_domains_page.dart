@@ -20,7 +20,7 @@ class MyDomainsPage extends StatefulWidget {
 
 class _MyDomainsPageState extends State<MyDomainsPage>
     with SingleTickerProviderStateMixin {
-  final domainController = Get.put(DomainController());
+  final domainController = Get.find<DomainController>();
   late TabController _tabController;
 
   @override
